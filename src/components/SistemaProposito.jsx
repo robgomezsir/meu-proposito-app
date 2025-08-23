@@ -220,13 +220,13 @@ const SistemaProposito = () => {
   }, []);
 
   // Função para atualizar campos do usuário
-  const handleInputChange = useCallback((e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUserInfo(prev => ({
       ...prev,
       [name]: value
     }));
-  }, []);
+  };
 
   const handleOptionClick = useCallback((optionIndex) => {
     setAnswers(prev => {
