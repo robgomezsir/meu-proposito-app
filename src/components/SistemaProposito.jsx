@@ -13,6 +13,7 @@ const SistemaProposito = () => {
   const [rhEmail, setRhEmail] = useState('');
   const [isRhAuthenticated, setIsRhAuthenticated] = useState(false);
   const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
+  const [dadosEnviados, setDadosEnviados] = useState(false); // Controla se os dados já foram enviados
 
   // Refs para controle de foco
   const nomeInputRef = useRef(null);
@@ -384,6 +385,7 @@ const SistemaProposito = () => {
     setUserInfo({ nome: '', cpf: '' });
     setCurrentView('formulario');
     setShowWelcome(true);
+    setDadosEnviados(false); // Resetar estado de dados enviados
   }, []);
 
   // Função para limpar todos os dados (para RH)
@@ -501,6 +503,9 @@ const SistemaProposito = () => {
       console.log('🔥 Salvando no Firebase...');
       const usuarioSalvo = await adicionarUsuario(novoUsuario);
       console.log('✅ Usuário salvo com sucesso:', usuarioSalvo);
+      
+      // Marcar dados como enviados
+      setDadosEnviados(true);
       
       // Mostrar mensagem de sucesso simples
       alert(`✅ Dados enviados com sucesso ao RH!\n\nObrigado por participar da avaliação.`);
@@ -938,14 +943,28 @@ const SistemaProposito = () => {
             </p>
           </div>
 
-                                           <div className="flex justify-center">
-              <button
-                onClick={enviarAoRH}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-              >
-                🔥 Enviar ao RH
-              </button>
-            </div>
+                                                                                       <div className="flex justify-center">
+               {dadosEnviados ? (
+                 <div className="text-center">
+                   <div className="bg-green-100 border border-green-300 text-green-800 px-6 py-3 rounded-full text-lg font-semibold mb-4">
+                     ✅ Dados já enviados ao RH
+                   </div>
+                   <button
+                     onClick={resetFormulario}
+                     className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                   >
+                     🔄 Fazer Nova Avaliação
+                   </button>
+                 </div>
+               ) : (
+                 <button
+                   onClick={enviarAoRH}
+                   className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                 >
+                   🔥 Enviar ao RH
+                 </button>
+               )}
+             </div>
         </div>
       </div>
     </div>
