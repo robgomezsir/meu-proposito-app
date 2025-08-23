@@ -250,14 +250,6 @@ const SistemaProposito = () => {
         if (currentQuestion < 3) {
           setCurrentQuestion(currentQuestion + 1);
         } else {
-          // Verificar se o CPF já existe antes de finalizar
-          const cpfJaExiste = usuarios.some(usuario => usuario.cpf === userInfo.cpf);
-          
-          if (cpfJaExiste) {
-            alert('Este CPF já foi utilizado para realizar um teste. Não é possível finalizar com o mesmo CPF.');
-            return prev;
-          }
-          
           // Salvar dados do usuário
           const score = calculateScore(prev);
           const analiseClinica = getAnaliseClinica(score, prev);
@@ -278,7 +270,7 @@ const SistemaProposito = () => {
       }
       return prev;
     });
-  }, [currentQuestion, userInfo.nome, userInfo.cpf, usuarios]);
+  }, [currentQuestion, userInfo.nome, userInfo.cpf]);
 
   const prevQuestion = useCallback(() => {
     if (currentQuestion > 0) {
@@ -287,20 +279,12 @@ const SistemaProposito = () => {
   }, [currentQuestion]);
 
   const resetFormulario = useCallback(() => {
-    // Verificar se o CPF já existe nos usuários
-    const cpfJaExiste = usuarios.some(usuario => usuario.cpf === userInfo.cpf);
-    
-    if (cpfJaExiste) {
-      alert('Este CPF já foi utilizado para realizar um teste. Não é possível realizar novo teste com o mesmo CPF.');
-      return;
-    }
-    
     setCurrentQuestion(0);
     setAnswers([[], [], [], []]);
     setUserInfo({ nome: '', cpf: '' });
     setCurrentView('formulario');
     setShowWelcome(true);
-  }, [usuarios, userInfo.cpf]);
+  }, []);
 
   // Função para limpar todos os dados (para RH)
   const limparTodosDados = () => {
@@ -574,7 +558,7 @@ const SistemaProposito = () => {
             onClick={resetFormulario}
             className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
-            Enviar ao RH
+                          Enviar ao RH
           </button>
         </div>
       </div>
