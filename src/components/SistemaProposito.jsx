@@ -219,16 +219,13 @@ const SistemaProposito = () => {
     setCurrentView('formulario');
   }, []);
 
-  // Função otimizada para atualizar campos sem causar re-render excessivo
-  const handleInputChange = useCallback((field, value) => {
-    setUserInfo(prev => {
-      // Só atualiza se o valor realmente mudou
-      if (prev[field] === value) return prev;
-      return {
-        ...prev,
-        [field]: value
-      };
-    });
+  // Função para atualizar campos do usuário
+  const handleInputChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setUserInfo(prev => ({
+      ...prev,
+      [name]: value
+    }));
   }, []);
 
   const handleOptionClick = useCallback((optionIndex) => {
@@ -362,7 +359,7 @@ const SistemaProposito = () => {
                       name="nome"
                       type="text"
                       value={userInfo.nome}
-                      onChange={(e) => handleInputChange('nome', e.target.value)}
+                      onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                       placeholder="Digite seu nome completo"
                       required
@@ -379,7 +376,7 @@ const SistemaProposito = () => {
                       name="cpf"
                       type="text"
                       value={userInfo.cpf}
-                      onChange={(e) => handleInputChange('cpf', e.target.value)}
+                      onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                       placeholder="Digite seu CPF"
                       required
