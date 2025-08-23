@@ -221,10 +221,14 @@ const SistemaProposito = () => {
 
   // Função otimizada para atualizar campos sem causar re-render excessivo
   const handleInputChange = useCallback((field, value) => {
-    setUserInfo(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setUserInfo(prev => {
+      // Só atualiza se o valor realmente mudou
+      if (prev[field] === value) return prev;
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
   }, []);
 
   const handleOptionClick = useCallback((optionIndex) => {
@@ -332,35 +336,59 @@ const SistemaProposito = () => {
                 Identificação do Participante
               </h2>
               
-              <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-indigo-100">
+              <form 
+                id="welcomeForm"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  // Verificar se o CPF já existe antes de começar o questionário
+                  const cpfJaExiste = usuarios.some(usuario => usuario.cpf === userInfo.cpf);
+                  
+                  if (cpfJaExiste) {
+                    alert('Este CPF já foi utilizado para realizar um teste. Não é possível realizar novo teste com o mesmo CPF.');
+                    return;
+                  }
+                  
+                  setShowWelcome(false);
+                }} 
+                className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-indigo-100"
+              >
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-2">
                       Nome Completo
                     </label>
                     <input
+                      id="nome"
+                      name="nome"
                       type="text"
                       value={userInfo.nome}
                       onChange={(e) => handleInputChange('nome', e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                       placeholder="Digite seu nome completo"
+                      required
+                      autoComplete="name"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">
                       CPF
                     </label>
                     <input
+                      id="cpf"
+                      name="cpf"
                       type="text"
                       value={userInfo.cpf}
                       onChange={(e) => handleInputChange('cpf', e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                       placeholder="Digite seu CPF"
+                      required
+                      autoComplete="off"
+                      maxLength="14"
                     />
                   </div>
                 </div>
-              </div>
+              </form>
 
               <div className="space-y-4 text-left bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 mb-8">
                 <p className="flex items-start">
@@ -383,17 +411,8 @@ const SistemaProposito = () => {
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
                 <button
-                  onClick={() => {
-                    // Verificar se o CPF já existe antes de começar o questionário
-                    const cpfJaExiste = usuarios.some(usuario => usuario.cpf === userInfo.cpf);
-                    
-                    if (cpfJaExiste) {
-                      alert('Este CPF já foi utilizado para realizar um teste. Não é possível realizar novo teste com o mesmo CPF.');
-                      return;
-                    }
-                    
-                    setShowWelcome(false);
-                  }}
+                  type="submit"
+                  form="welcomeForm"
                   disabled={!userInfo.nome.trim() || !userInfo.cpf.trim()}
                   className={`px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg ${
                     userInfo.nome.trim() && userInfo.cpf.trim()
