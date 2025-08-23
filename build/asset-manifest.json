@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/meu-proposito-app/static/css/main.47a0f0ee.css",
+    "main.js": "/meu-proposito-app/static/js/main.73fb3f75.js",
+    "index.html": "/meu-proposito-app/index.html",
+    "main.47a0f0ee.css.map": "/meu-proposito-app/static/css/main.47a0f0ee.css.map",
+    "main.73fb3f75.js.map": "/meu-proposito-app/static/js/main.73fb3f75.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.47a0f0ee.css",
+    "static/js/main.73fb3f75.js"
+  ]
+}
