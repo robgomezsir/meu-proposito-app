@@ -1,5 +1,4 @@
 {
-  "homepage": "https://robgomezsir.github.io/meu-proposito-app",
   "name": "sistema-proposito",
   "version": "1.0.0",
   "private": true,
@@ -9,8 +8,11 @@
     "lucide-react": "^0.268.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "set-homepage": "node setHomepage.js",
+    "start": "npm run set-homepage && react-scripts start",
     "build": "react-scripts build",
+    "build-github": "set \"REACT_APP_ENV=github\" && npm run set-homepage && react-scripts build",
+    "build-render": "set \"REACT_APP_ENV=render\" && npm run set-homepage && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
@@ -35,5 +37,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "homepage": "."
 }
