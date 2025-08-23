@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2, Mail } from 'lucide-react';
 
 const SistemaProposito = () => {
@@ -201,7 +201,7 @@ const SistemaProposito = () => {
     return analise;
   };
 
-  const handleRhLogin = (e) => {
+  const handleRhLogin = useCallback((e) => {
     e.preventDefault();
     // Verificação discreta para email corporativo da Atento
     if (rhEmail.includes('@atento.com') && rhEmail.trim()) {
@@ -211,75 +211,80 @@ const SistemaProposito = () => {
       // Mensagem genérica sem revelar o domínio específico
       alert('Email não autorizado para acesso ao dashboard.');
     }
-  };
+  }, [rhEmail]);
 
-  const handleRhLogout = () => {
+  const handleRhLogout = useCallback(() => {
     setIsRhAuthenticated(false);
     setRhEmail('');
     setCurrentView('formulario');
-  };
+  }, []);
 
   // Função otimizada para atualizar campos sem causar re-render excessivo
-  const handleInputChange = (field, value) => {
+  const handleInputChange = useCallback((field, value) => {
     setUserInfo(prev => ({
       ...prev,
       [field]: value
     }));
-  };
+  }, []);
 
-  const handleOptionClick = (optionIndex) => {
-    const newAnswers = [...answers];
-    const currentAnswers = newAnswers[currentQuestion];
-    
-    if (currentAnswers.includes(optionIndex)) {
-      newAnswers[currentQuestion] = currentAnswers.filter(i => i !== optionIndex);
-    } else {
-      if (currentAnswers.length < 5) {
-        newAnswers[currentQuestion] = [...currentAnswers, optionIndex];
-      }
-    }
-    
-    setAnswers(newAnswers);
-  };
-
-  const nextQuestion = () => {
-    if (answers[currentQuestion].length === 5) {
-      if (currentQuestion < 3) {
-        setCurrentQuestion(currentQuestion + 1);
+  const handleOptionClick = useCallback((optionIndex) => {
+    setAnswers(prev => {
+      const newAnswers = [...prev];
+      const currentAnswers = newAnswers[currentQuestion];
+      
+      if (currentAnswers.includes(optionIndex)) {
+        newAnswers[currentQuestion] = currentAnswers.filter(i => i !== optionIndex);
       } else {
-        // Salvar dados do usuário
-        const score = calculateScore();
-        const analiseClinica = getAnaliseClinica(score, answers);
-        const novoUsuario = {
-          id: Date.now(),
-          nome: userInfo.nome,
-          cpf: userInfo.cpf,
-          respostas: answers,
-          score: score,
-          status: getStatus(score),
-          analiseClinica: analiseClinica,
-          dataRealizacao: new Date().toLocaleDateString('pt-BR')
-        };
-        
-        setUsuarios(prev => [...prev, novoUsuario]);
-        setCurrentView('sucesso');
+        if (currentAnswers.length < 5) {
+          newAnswers[currentQuestion] = [...currentAnswers, optionIndex];
+        }
       }
-    }
-  };
+      
+      return newAnswers;
+    });
+  }, [currentQuestion]);
 
-  const prevQuestion = () => {
+  const nextQuestion = useCallback(() => {
+    setAnswers(prev => {
+      if (prev[currentQuestion].length === 5) {
+        if (currentQuestion < 3) {
+          setCurrentQuestion(currentQuestion + 1);
+        } else {
+          // Salvar dados do usuário
+          const score = calculateScore(prev);
+          const analiseClinica = getAnaliseClinica(score, prev);
+          const novoUsuario = {
+            id: Date.now(),
+            nome: userInfo.nome,
+            cpf: userInfo.cpf,
+            respostas: prev,
+            score: score,
+            status: getStatus(score),
+            analiseClinica: analiseClinica,
+            dataRealizacao: new Date().toLocaleDateString('pt-BR')
+          };
+          
+          setUsuarios(prevUsers => [...prevUsers, novoUsuario]);
+          setCurrentView('sucesso');
+        }
+      }
+      return prev;
+    });
+  }, [currentQuestion, userInfo.nome, userInfo.cpf]);
+
+  const prevQuestion = useCallback(() => {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
     }
-  };
+  }, [currentQuestion]);
 
-  const resetFormulario = () => {
+  const resetFormulario = useCallback(() => {
     setCurrentQuestion(0);
     setAnswers([[], [], [], []]);
     setUserInfo({ nome: '', cpf: '' });
     setCurrentView('formulario');
     setShowWelcome(true);
-  };
+  }, []);
 
   // Função para limpar todos os dados (para RH)
   const limparTodosDados = () => {
