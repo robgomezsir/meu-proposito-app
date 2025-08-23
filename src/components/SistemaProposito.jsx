@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2, Mail } from 'lucide-react';
+import { adicionarUsuario, buscarUsuarios, deletarTodosUsuarios, verificarCPFExistente } from '../firebase/services';
+import { testarConexaoFirebase, limparDadosTeste } from '../firebase/test-connection';
 
 const SistemaProposito = () => {
   const [currentView, setCurrentView] = useState('formulario'); // formulario, sucesso, dashboard
@@ -10,6 +12,7 @@ const SistemaProposito = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const [rhEmail, setRhEmail] = useState('');
   const [isRhAuthenticated, setIsRhAuthenticated] = useState(false);
+  const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
 
   // Refs para controle de foco
   const nomeInputRef = useRef(null);
@@ -17,10 +20,30 @@ const SistemaProposito = () => {
 
   // Carregar dados salvos ao inicializar
   useEffect(() => {
-    const savedUsuarios = localStorage.getItem('usuarios');
-    if (savedUsuarios) {
-      setUsuarios(JSON.parse(savedUsuarios));
-    }
+    const carregarUsuarios = async () => {
+      setCarregandoUsuarios(true);
+      try {
+        console.log('🔄 Carregando usuários do Firebase...');
+        const usuariosFirebase = await buscarUsuarios();
+        console.log('✅ Usuários carregados do Firebase:', usuariosFirebase.length);
+        setUsuarios(usuariosFirebase);
+        
+        // Sincronizar com localStorage como backup
+        localStorage.setItem('usuarios', JSON.stringify(usuariosFirebase));
+      } catch (error) {
+        console.error('❌ Erro ao carregar usuários do Firebase:', error);
+        // Fallback para localStorage em caso de erro
+        const savedUsuarios = localStorage.getItem('usuarios');
+        if (savedUsuarios) {
+          console.log('📱 Carregando dados do localStorage como fallback');
+          setUsuarios(JSON.parse(savedUsuarios));
+        }
+      } finally {
+        setCarregandoUsuarios(false);
+      }
+    };
+    
+    carregarUsuarios();
     
     // Verificar se já está autenticado como RH
     const rhAuth = localStorage.getItem('rhAuthenticated');
@@ -29,7 +52,7 @@ const SistemaProposito = () => {
     }
   }, []);
 
-  // Salvar dados sempre que houver mudança
+  // Salvar dados sempre que houver mudança (localStorage como backup)
   useEffect(() => {
     localStorage.setItem('usuarios', JSON.stringify(usuarios));
   }, [usuarios]);
@@ -291,7 +314,7 @@ const SistemaProposito = () => {
   };
 
   // Função para iniciar o questionário
-  const iniciarQuestionario = (e) => {
+  const iniciarQuestionario = async (e) => {
     e.preventDefault();
     
     // Verificar se os campos estão preenchidos e válidos
@@ -300,12 +323,22 @@ const SistemaProposito = () => {
       return;
     }
     
-    // Verificar se o CPF já existe
-    const cpfJaExiste = usuarios.some(usuario => usuario.cpf === userInfo.cpf);
-    
-    if (cpfJaExiste) {
-      alert('Este CPF já foi utilizado para realizar um teste. Não é possível realizar novo teste com o mesmo CPF.');
-      return;
+    // Verificar se o CPF já existe no Firebase
+    try {
+      const cpfJaExiste = await verificarCPFExistente(userInfo.cpf);
+      
+      if (cpfJaExiste) {
+        alert('Este CPF já foi utilizado para realizar um teste. Não é possível realizar novo teste com o mesmo CPF.');
+        return;
+      }
+    } catch (error) {
+      console.error('Erro ao verificar CPF:', error);
+      // Fallback para verificação local
+      const cpfJaExisteLocal = usuarios.some(usuario => usuario.cpf === userInfo.cpf);
+      if (cpfJaExisteLocal) {
+        alert('Este CPF já foi utilizado para realizar um teste. Não é possível realizar novo teste com o mesmo CPF.');
+        return;
+      }
     }
     
     setShowWelcome(false);
@@ -329,32 +362,15 @@ const SistemaProposito = () => {
   }, [currentQuestion]);
 
   const nextQuestion = useCallback(() => {
-    setAnswers(prev => {
-      if (prev[currentQuestion].length === 5) {
-        if (currentQuestion < 3) {
-          setCurrentQuestion(currentQuestion + 1);
-        } else {
-          // Salvar dados do usuário
-          const score = calculateScore(prev);
-          const analiseClinica = getAnaliseClinica(score, prev);
-          const novoUsuario = {
-            id: Date.now(),
-            nome: userInfo.nome,
-            cpf: userInfo.cpf,
-            respostas: prev,
-            score: score,
-            status: getStatus(score),
-            analiseClinica: analiseClinica,
-            dataRealizacao: new Date().toLocaleDateString('pt-BR')
-          };
-          
-          setUsuarios(prevUsers => [...prevUsers, novoUsuario]);
-          setCurrentView('sucesso');
-        }
+    if (answers[currentQuestion].length === 5) {
+      if (currentQuestion < 3) {
+        setCurrentQuestion(currentQuestion + 1);
+      } else {
+        // Apenas ir para a tela de sucesso, sem salvar ainda
+        setCurrentView('sucesso');
       }
-      return prev;
-    });
-  }, [currentQuestion, userInfo.nome, userInfo.cpf]);
+    }
+  }, [currentQuestion, answers]);
 
   const prevQuestion = useCallback(() => {
     if (currentQuestion > 0) {
@@ -371,10 +387,115 @@ const SistemaProposito = () => {
   }, []);
 
   // Função para limpar todos os dados (para RH)
-  const limparTodosDados = () => {
+  const limparTodosDados = async () => {
     if (window.confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.')) {
-      setUsuarios([]);
-      localStorage.removeItem('usuarios');
+      try {
+        await deletarTodosUsuarios();
+        setUsuarios([]);
+        localStorage.removeItem('usuarios');
+        alert('Todos os dados foram removidos com sucesso!');
+      } catch (error) {
+        console.error('Erro ao limpar dados do Firebase:', error);
+        alert('Erro ao limpar dados. Tente novamente.');
+      }
+    }
+  };
+
+  // Função para testar conexão Firebase
+  const testarFirebase = async () => {
+    try {
+      const resultado = await testarConexaoFirebase();
+      if (resultado.sucesso) {
+        alert(`✅ Teste Firebase bem-sucedido!\n\nDocumento criado com ID: ${resultado.documentoId}\nDocumentos encontrados: ${resultado.documentos.length}`);
+      } else {
+        alert(`❌ Teste Firebase falhou:\n\n${resultado.erro}`);
+      }
+    } catch (error) {
+      console.error('Erro ao testar Firebase:', error);
+      alert(`❌ Erro ao executar teste:\n\n${error.message}`);
+    }
+  };
+
+  // Função para limpar dados de teste
+  const limparTeste = async () => {
+    try {
+      const resultado = await limparDadosTeste();
+      if (resultado.sucesso) {
+        alert(`🧹 Dados de teste verificados!\n\nDocumentos encontrados: ${resultado.documentosEncontrados}`);
+      } else {
+        alert(`❌ Erro ao verificar dados de teste:\n\n${resultado.erro}`);
+      }
+    } catch (error) {
+      console.error('Erro ao limpar dados de teste:', error);
+      alert(`❌ Erro ao executar limpeza:\n\n${error.message}`);
+    }
+  };
+
+  // Função para enviar dados ao RH (salvar no Firebase)
+  const enviarAoRH = async () => {
+    try {
+      // Calcular score e análise
+      const score = calculateScore(answers);
+      const analiseClinica = getAnaliseClinica(score, answers);
+      
+      // Converter arrays aninhados para objetos planos (compatível com Firestore)
+      const respostasConvertidas = {
+        pergunta1: answers[0] || [],
+        pergunta2: answers[1] || [],
+        pergunta3: answers[2] || [],
+        pergunta4: answers[3] || []
+      };
+      
+      // Preparar dados do usuário
+      const novoUsuario = {
+        nome: userInfo.nome,
+        cpf: userInfo.cpf,
+        respostas: respostasConvertidas,
+        score: score,
+        status: getStatus(score),
+        analiseClinica: analiseClinica,
+        dataRealizacao: new Date().toLocaleDateString('pt-BR')
+      };
+      
+      console.log('📝 Dados preparados para envio:', novoUsuario);
+      
+      // Salvar no Firebase
+      console.log('🔥 Salvando no Firebase...');
+      const usuarioSalvo = await adicionarUsuario(novoUsuario);
+      console.log('✅ Usuário salvo com sucesso:', usuarioSalvo);
+      
+      // Mostrar mensagem de sucesso simples
+      alert(`✅ Dados enviados com sucesso ao RH!\n\nObrigado por participar da avaliação.`);
+      
+      // Recarregar dados do Firebase para garantir sincronização (sem redirecionar)
+      setTimeout(async () => {
+        try {
+          const usuariosAtualizados = await buscarUsuarios();
+          setUsuarios(usuariosAtualizados);
+        } catch (error) {
+          console.error('Erro ao recarregar dados:', error);
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Erro ao enviar dados ao RH:', error);
+      alert(`❌ Erro ao enviar dados:\n\n${error.message}\n\nTente novamente.`);
+    }
+  };
+
+  // Função auxiliar para converter respostas do novo formato para array
+  const converterRespostasParaArray = (respostas) => {
+    if (Array.isArray(respostas)) {
+      // Formato antigo (array de arrays) - manter compatibilidade
+      return respostas;
+    } else {
+      // Novo formato (objeto com pergunta1, pergunta2, etc.)
+      return [
+        respostas.pergunta1 || [],
+        respostas.pergunta2 || [],
+        respostas.pergunta3 || [],
+        respostas.pergunta4 || []
+      ];
     }
   };
 
@@ -779,73 +900,83 @@ const SistemaProposito = () => {
             </p>
           </div>
 
-          <button
-            onClick={resetFormulario}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-          >
-                          Enviar ao RH
-          </button>
+                     <div className="flex gap-4">
+             <button
+               onClick={resetFormulario}
+               className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+             >
+               ← Voltar ao Formulário
+             </button>
+             <button
+               onClick={enviarAoRH}
+               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+             >
+               🔥 Enviar ao RH
+             </button>
+           </div>
         </div>
       </div>
     </div>
   );
 
-  // Funções de Download
-  const downloadIndividual = (usuario) => {
-    const content = `
-RELATÓRIO INDIVIDUAL - ANÁLISE DE PROPÓSITO
-=============================================
-
-DADOS PESSOAIS:
-Nome: ${usuario.nome}
-CPF: ${usuario.cpf}
-Data da Avaliação: ${usuario.dataRealizacao}
-
-RESULTADO GERAL:
-Score Final: ${usuario.score} pontos
-Status: ${usuario.status}
-
-PERFIL GERAL:
-${usuario.analiseClinica.perfil}
-
-COMPETÊNCIAS IDENTIFICADAS:
-${usuario.analiseClinica.competencias.map(comp => `• ${comp}`).join('\n')}
-
-ANÁLISE COMPORTAMENTAL:
-
-Adaptabilidade:
-${usuario.analiseClinica.adaptabilidade}
-
-Liderança:
-${usuario.analiseClinica.lideranca}
-
-Relacionamento Interpessoal:
-${usuario.analiseClinica.relacionamentoInterpessoal}
-
-ÁREAS DE DESENVOLVIMENTO:
-${usuario.analiseClinica.areasDesenvolvimento.map(area => `• ${area}`).join('\n')}
-
-RECOMENDAÇÕES:
-${usuario.analiseClinica.recomendacoes.map(rec => `• ${rec}`).join('\n')}
-
-DETALHAMENTO DAS RESPOSTAS:
-
-Pergunta 1 - Como as pessoas te veem:
-${usuario.respostas[0].map(index => `• ${caracteristicas[index]}`).join('\n')}
-
-Pergunta 2 - Como você se vê:
-${usuario.respostas[1].map(index => `• ${caracteristicas[index]}`).join('\n')}
-
-Pergunta 3 - Frases importantes:
-${usuario.respostas[2].map(index => `• ${frasesVida[index]}`).join('\n')}
-
-Pergunta 4 - Valores importantes:
-${usuario.respostas[3].map(index => `• ${valores[index]}`).join('\n')}
-
-==============================================
-Relatório gerado automaticamente pelo Sistema de Análise de Propósito
-Data de geração: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}
-`;
+        // Funções de Download
+    const downloadIndividual = (usuario) => {
+      const respostasArray = converterRespostasParaArray(usuario.respostas);
+     
+     const content = `
+ RELATÓRIO INDIVIDUAL - ANÁLISE DE PROPÓSITO
+ =============================================
+ 
+ DADOS PESSOAIS:
+ Nome: ${usuario.nome}
+ CPF: ${usuario.cpf}
+ Data da Avaliação: ${usuario.dataRealizacao}
+ 
+ RESULTADO GERAL:
+ Score Final: ${usuario.score} pontos
+ Status: ${usuario.status}
+ 
+ PERFIL GERAL:
+ ${usuario.analiseClinica.perfil}
+ 
+ COMPETÊNCIAS IDENTIFICADAS:
+ ${usuario.analiseClinica.competencias.map(comp => `• ${comp}`).join('\n')}
+ 
+ ANÁLISE COMPORTAMENTAL:
+ 
+ Adaptabilidade:
+ ${usuario.analiseClinica.adaptabilidade}
+ 
+ Liderança:
+ ${usuario.analiseClinica.lideranca}
+ 
+ Relacionamento Interpessoal:
+ ${usuario.analiseClinica.relacionamentoInterpessoal}
+ 
+ ÁREAS DE DESENVOLVIMENTO:
+ ${usuario.analiseClinica.areasDesenvolvimento.map(area => `• ${area}`).join('\n')}
+ 
+ RECOMENDAÇÕES:
+ ${usuario.analiseClinica.recomendacoes.map(rec => `• ${rec}`).join('\n')}
+ 
+ DETALHAMENTO DAS RESPOSTAS:
+ 
+ Pergunta 1 - Como as pessoas te veem:
+ ${respostasArray[0].map(index => `• ${caracteristicas[index]}`).join('\n')}
+ 
+ Pergunta 2 - Como você se vê:
+ ${respostasArray[1].map(index => `• ${caracteristicas[index]}`).join('\n')}
+ 
+ Pergunta 3 - Frases importantes:
+ ${respostasArray[2].map(index => `• ${frasesVida[index]}`).join('\n')}
+ 
+ Pergunta 4 - Valores importantes:
+ ${respostasArray[3].map(index => `• ${valores[index]}`).join('\n')}
+ 
+ ==============================================
+ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
+ Data de geração: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}
+ `;
 
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -998,6 +1129,8 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   <Trash2 className="w-5 h-5 mr-2" />
                   Limpar Todos os Dados
                 </button>
+                
+                
               </div>
               {/* Informação sobre Persistência */}
               <div className="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl">
@@ -1008,9 +1141,9 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm text-blue-700">
-                      <strong>💾 Dados Persistidos:</strong> Todos os registros são salvos automaticamente no navegador e mantidos mesmo após atualizar a página. Use "Exportar Backup" para criar cópias de segurança.
-                    </p>
+                                         <p className="text-sm text-blue-700">
+                       <strong>💾 Dados Persistidos:</strong> Todos os registros são salvos no Firebase (nuvem) quando o botão "Enviar ao RH" é clicado. Use "Exportar Backup" para criar cópias de segurança e "Testar Firebase" para verificar a conexão.
+                     </p>
                   </div>
                 </div>
               </div>
@@ -1079,15 +1212,23 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   <p className="text-gray-600">Clique em um colaborador para ver a análise detalhada</p>
                 </div>
                 
-                {usuarios.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Users className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-800 mb-2">Nenhum colaborador avaliado</h3>
-                    <p className="text-gray-600">Os resultados aparecerão aqui assim que os colaboradores completarem o questionário.</p>
-                  </div>
-                ) : (
+                                 {carregandoUsuarios ? (
+                   <div className="p-12 text-center">
+                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-spin">
+                       <div className="w-8 h-8 bg-blue-600 rounded-full"></div>
+                     </div>
+                     <h3 className="text-lg font-medium text-gray-800 mb-2">Carregando dados...</h3>
+                     <p className="text-gray-600">Buscando informações do Firebase...</p>
+                   </div>
+                 ) : usuarios.length === 0 ? (
+                   <div className="p-12 text-center">
+                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                       <Users className="w-8 h-8 text-gray-400" />
+                     </div>
+                     <h3 className="text-lg font-medium text-gray-800 mb-2">Nenhum colaborador avaliado</h3>
+                     <p className="text-gray-600">Os resultados aparecerão aqui assim que os colaboradores completarem o questionário.</p>
+                   </div>
+                 ) : (
                   <div className="divide-y divide-gray-200">
                     {usuarios.map((usuario) => (
                       <div
