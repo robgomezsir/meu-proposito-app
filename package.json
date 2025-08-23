@@ -5,7 +5,8 @@
   "private": true,
   "dependencies": {
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "lucide-react": "^0.268.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -18,7 +19,10 @@
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "tailwindcss": "^3.3.0",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24"
   },
   "browserslist": {
     "production": [
