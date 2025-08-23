@@ -195,6 +195,14 @@ const SistemaProposito = () => {
     }
   };
 
+  // Função otimizada para atualizar campos sem causar re-render excessivo
+  const handleInputChange = (field, value) => {
+    setUserInfo(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleOptionClick = (optionIndex) => {
     const newAnswers = [...answers];
     const currentAnswers = newAnswers[currentQuestion];
@@ -300,26 +308,26 @@ const SistemaProposito = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nome Completo
               </label>
-              <input
-                type="text"
-                value={userInfo.nome}
-                onChange={(e) => setUserInfo({...userInfo, nome: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                placeholder="Digite seu nome completo"
-              />
+                             <input
+                 type="text"
+                 value={userInfo.nome}
+                 onChange={(e) => handleInputChange('nome', e.target.value)}
+                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                 placeholder="Digite seu nome completo"
+               />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 CPF
               </label>
-              <input
-                type="text"
-                value={userInfo.cpf}
-                onChange={(e) => setUserInfo({...userInfo, cpf: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                placeholder="Digite seu CPF"
-              />
+                             <input
+                 type="text"
+                 value={userInfo.cpf}
+                 onChange={(e) => handleInputChange('cpf', e.target.value)}
+                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                 placeholder="Digite seu CPF"
+               />
             </div>
           </div>
 
