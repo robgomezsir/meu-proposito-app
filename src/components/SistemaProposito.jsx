@@ -9,6 +9,19 @@ const SistemaProposito = () => {
   const [usuarios, setUsuarios] = useState([]); // Simulando banco de dados
   const [showWelcome, setShowWelcome] = useState(true);
 
+  // Carregar dados salvos ao inicializar
+  useEffect(() => {
+    const savedUsuarios = localStorage.getItem('usuarios');
+    if (savedUsuarios) {
+      setUsuarios(JSON.parse(savedUsuarios));
+    }
+  }, []);
+
+  // Salvar dados sempre que houver mudança
+  useEffect(() => {
+    localStorage.setItem('usuarios', JSON.stringify(usuarios));
+  }, [usuarios]);
+
   // Dados das perguntas (mesmo do código anterior)
   const caracteristicas = [
     'receptiva', 'feliz', 'estudiosa', 'sensata', 'realista', 'racional', 'detalhista', 'perfeccionista',
@@ -234,6 +247,33 @@ const SistemaProposito = () => {
     setUserInfo({ nome: '', cpf: '' });
     setCurrentView('login');
     setShowWelcome(true);
+  };
+
+  // Função para limpar todos os dados (para RH)
+  const limparTodosDados = () => {
+    if (window.confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.')) {
+      setUsuarios([]);
+      localStorage.removeItem('usuarios');
+    }
+  };
+
+  // Função para exportar dados como backup
+  const exportarBackup = () => {
+    const backup = {
+      usuarios: usuarios,
+      dataExportacao: new Date().toISOString(),
+      totalUsuarios: usuarios.length
+    };
+    
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `backup_usuarios_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Componente de Login
@@ -684,8 +724,8 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
         <div className="max-w-7xl mx-auto px-6 py-8">
           {!usuarioSelecionado ? (
             <div>
-              {/* Botão de Download Consolidado */}
-              <div className="mb-6">
+              {/* Botões de Gerenciamento */}
+              <div className="mb-6 flex flex-wrap gap-4">
                 <button
                   onClick={downloadConsolidado}
                   disabled={usuarios.length === 0}
@@ -698,7 +738,44 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   <FileText className="w-5 h-5 mr-2" />
                   Download Relatório Consolidado
                 </button>
+                
+                <button
+                  onClick={exportarBackup}
+                  disabled={usuarios.length === 0}
+                  className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                    usuarios.length > 0
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <BarChart3 className="w-5 h-5 mr-2" />
+                  Exportar Backup
+                </button>
+                
+                <button
+                  onClick={limparTodosDados}
+                  className="flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                >
+                  <Trash2 className="w-5 h-5 mr-2" />
+                  Limpar Todos os Dados
+                </button>
               </div>
+              {/* Informação sobre Persistência */}
+              <div className="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-blue-700">
+                      <strong>💾 Dados Persistidos:</strong> Todos os registros são salvos automaticamente no navegador e mantidos mesmo após atualizar a página. Use "Exportar Backup" para criar cópias de segurança.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Estatísticas Gerais */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
