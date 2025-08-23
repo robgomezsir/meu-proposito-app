@@ -390,13 +390,51 @@ const SistemaProposito = () => {
   const limparTodosDados = async () => {
     if (window.confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.')) {
       try {
+        // Log detalhado da ação de exclusão
+        const logExclusao = {
+          acao: 'EXCLUSÃO TOTAL DE DADOS',
+          usuarioRH: rhEmail,
+          timestamp: new Date().toISOString(),
+          dataFormatada: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR'),
+          totalUsuariosExcluidos: usuarios.length,
+          detalhes: 'Todos os dados foram removidos do sistema'
+        };
+        
+        console.log('🚨 AÇÃO CRÍTICA EXECUTADA:', logExclusao);
+        console.log('📋 Log de Auditoria:', JSON.stringify(logExclusao, null, 2));
+        
+        // Executar a exclusão
         await deletarTodosUsuarios();
         setUsuarios([]);
         localStorage.removeItem('usuarios');
-        alert('Todos os dados foram removidos com sucesso!');
+        
+        // Log de sucesso
+        console.log('✅ Exclusão concluída com sucesso');
+        console.log('📊 Estatísticas da exclusão:', {
+          dadosRemovidos: logExclusao.totalUsuariosExcluidos,
+          executadoPor: logExclusao.usuarioRH,
+          horario: logExclusao.dataFormatada
+        });
+        
+        alert(`🚨 Dados excluídos com sucesso!\n\nTotal de registros removidos: ${logExclusao.totalUsuariosExcluidos}\nExecutado por: ${logExclusao.usuarioRH}\nData/Hora: ${logExclusao.dataFormatada}\n\n⚠️ Esta ação foi registrada no log de auditoria.`);
+        
       } catch (error) {
-        console.error('Erro ao limpar dados do Firebase:', error);
-        alert('Erro ao limpar dados. Tente novamente.');
+        console.error('❌ Erro ao limpar dados do Firebase:', error);
+        
+        // Log de erro
+        const logErro = {
+          acao: 'TENTATIVA DE EXCLUSÃO FALHOU',
+          usuarioRH: rhEmail,
+          timestamp: new Date().toISOString(),
+          dataFormatada: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR'),
+          erro: error.message,
+          stack: error.stack
+        };
+        
+        console.log('🚨 ERRO NA EXCLUSÃO:', logErro);
+        console.log('📋 Log de Erro:', JSON.stringify(logErro, null, 2));
+        
+        alert(`❌ Erro ao limpar dados:\n\n${error.message}\n\nTente novamente.`);
       }
     }
   };
@@ -900,20 +938,14 @@ const SistemaProposito = () => {
             </p>
           </div>
 
-                     <div className="flex gap-4">
-             <button
-               onClick={resetFormulario}
-               className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-             >
-               ← Voltar ao Formulário
-             </button>
-             <button
-               onClick={enviarAoRH}
-               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-             >
-               🔥 Enviar ao RH
-             </button>
-           </div>
+                                           <div className="flex justify-center">
+              <button
+                onClick={enviarAoRH}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
+                🔥 Enviar ao RH
+              </button>
+            </div>
         </div>
       </div>
     </div>
