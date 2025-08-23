@@ -383,7 +383,17 @@ const SistemaProposito = () => {
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
                 <button
-                  onClick={() => setShowWelcome(false)}
+                  onClick={() => {
+                    // Verificar se o CPF já existe antes de começar o questionário
+                    const cpfJaExiste = usuarios.some(usuario => usuario.cpf === userInfo.cpf);
+                    
+                    if (cpfJaExiste) {
+                      alert('Este CPF já foi utilizado para realizar um teste. Não é possível realizar novo teste com o mesmo CPF.');
+                      return;
+                    }
+                    
+                    setShowWelcome(false);
+                  }}
                   disabled={!userInfo.nome.trim() || !userInfo.cpf.trim()}
                   className={`px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg ${
                     userInfo.nome.trim() && userInfo.cpf.trim()
