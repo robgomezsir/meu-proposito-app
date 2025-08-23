@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2 } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2, Mail, Lock, AlertCircle, Building2 } from 'lucide-react';
 
 const SistemaProposito = () => {
-  const [currentView, setCurrentView] = useState('login'); // login, formulario, sucesso, dashboard
+  const [currentView, setCurrentView] = useState('auth'); // auth, login, formulario, sucesso, dashboard, rh-auth
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([[], [], [], []]);
-  const [userInfo, setUserInfo] = useState({ nome: '', cpf: '' });
+  const [userInfo, setUserInfo] = useState({ nome: '', cpf: '', email: '' });
   const [usuarios, setUsuarios] = useState([]); // Simulando banco de dados
   const [showWelcome, setShowWelcome] = useState(true);
+  const [authError, setAuthError] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [rhAuthError, setRhAuthError] = useState('');
+  const [rhUserInfo, setRhUserInfo] = useState({ email: '' });
+  const [isRhAuthenticated, setIsRhAuthenticated] = useState(false);
 
   // Carregar dados salvos ao inicializar
   useEffect(() => {
@@ -15,12 +20,97 @@ const SistemaProposito = () => {
     if (savedUsuarios) {
       setUsuarios(JSON.parse(savedUsuarios));
     }
+    
+    // Verificar se já está autenticado
+    const authStatus = localStorage.getItem('isAuthenticated');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+      setCurrentView('login');
+    }
+    
+    // Verificar se já está autenticado como RH
+    const rhAuthStatus = localStorage.getItem('isRhAuthenticated');
+    if (rhAuthStatus === 'true') {
+      setIsRhAuthenticated(true);
+    }
   }, []);
 
   // Salvar dados sempre que houver mudança
   useEffect(() => {
     localStorage.setItem('usuarios', JSON.stringify(usuarios));
   }, [usuarios]);
+
+  // Salvar status de autenticação
+  useEffect(() => {
+    localStorage.setItem('isAuthenticated', isAuthenticated.toString());
+  }, [isAuthenticated]);
+
+  // Salvar status de autenticação RH
+  useEffect(() => {
+    localStorage.setItem('isRhAuthenticated', isRhAuthenticated.toString());
+  }, [isRhAuthenticated]);
+
+  // Função para validar email corporativo da ATENTO
+  const validateAtentoEmail = (email) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@atento\.com$/;
+    return emailRegex.test(email);
+  };
+
+  // Função para autenticação
+  const handleAuthentication = (e) => {
+    e.preventDefault();
+    setAuthError('');
+    
+    if (!userInfo.email.trim()) {
+      setAuthError('Por favor, informe seu email corporativo.');
+      return;
+    }
+    
+    if (!validateAtentoEmail(userInfo.email)) {
+      setAuthError('Acesso restrito apenas para colaboradores com email corporativo da ATENTO (@atento.com).');
+      return;
+    }
+    
+    // Autenticação bem-sucedida
+    setIsAuthenticated(true);
+    setCurrentView('login');
+  };
+
+  // Função para logout
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentView('auth');
+    setUserInfo({ nome: '', cpf: '', email: '' });
+    localStorage.removeItem('isAuthenticated');
+  };
+
+  // Função para autenticação RH
+  const handleRhAuthentication = (e) => {
+    e.preventDefault();
+    setRhAuthError('');
+    
+    if (!rhUserInfo.email.trim()) {
+      setRhAuthError('Por favor, informe seu email corporativo.');
+      return;
+    }
+    
+    if (!validateAtentoEmail(rhUserInfo.email)) {
+      setRhAuthError('Acesso restrito apenas para colaboradores com email corporativo da ATENTO (@atento.com).');
+      return;
+    }
+    
+    // Autenticação RH bem-sucedida
+    setIsRhAuthenticated(true);
+    setCurrentView('dashboard');
+  };
+
+  // Função para logout RH
+  const handleRhAuthenticated = () => {
+    setIsRhAuthenticated(false);
+    setRhUserInfo({ email: '' });
+    setCurrentView('login');
+    localStorage.removeItem('isRhAuthenticated');
+  };
 
   // Dados das perguntas (mesmo do código anterior)
   const caracteristicas = [
@@ -201,6 +291,24 @@ const SistemaProposito = () => {
       ...prev,
       [field]: value
     }));
+    
+    // Limpar erro de autenticação quando o usuário digita
+    if (field === 'email' && authError) {
+      setAuthError('');
+    }
+  };
+
+  // Função para atualizar campos RH
+  const handleRhInputChange = (field, value) => {
+    setRhUserInfo(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Limpar erro de autenticação RH quando o usuário digita
+    if (field === 'email' && rhAuthError) {
+      setRhAuthError('');
+    }
   };
 
   const handleOptionClick = (optionIndex) => {
@@ -230,6 +338,7 @@ const SistemaProposito = () => {
           id: Date.now(),
           nome: userInfo.nome,
           cpf: userInfo.cpf,
+          email: userInfo.email,
           respostas: answers,
           score: score,
           status: getStatus(score),
@@ -252,7 +361,7 @@ const SistemaProposito = () => {
   const resetFormulario = () => {
     setCurrentQuestion(0);
     setAnswers([[], [], [], []]);
-    setUserInfo({ nome: '', cpf: '' });
+    setUserInfo(prev => ({ ...prev, nome: '', cpf: '' }));
     setCurrentView('login');
     setShowWelcome(true);
   };
@@ -294,6 +403,9 @@ const SistemaProposito = () => {
           </div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Acesso ao Propósito</h1>
           <p className="text-gray-600">Informe seus dados para começar</p>
+          <div className="mt-2 text-sm text-indigo-600 font-medium">
+            Autenticado como: {userInfo.email}
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -308,26 +420,26 @@ const SistemaProposito = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nome Completo
               </label>
-                             <input
-                 type="text"
-                 value={userInfo.nome}
-                 onChange={(e) => handleInputChange('nome', e.target.value)}
-                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                 placeholder="Digite seu nome completo"
-               />
+              <input
+                type="text"
+                value={userInfo.nome}
+                onChange={(e) => handleInputChange('nome', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                placeholder="Digite seu nome completo"
+              />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 CPF
               </label>
-                             <input
-                 type="text"
-                 value={userInfo.cpf}
-                 onChange={(e) => handleInputChange('cpf', e.target.value)}
-                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                 placeholder="Digite seu CPF"
-               />
+              <input
+                type="text"
+                value={userInfo.cpf}
+                onChange={(e) => handleInputChange('cpf', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                placeholder="Digite seu CPF"
+              />
             </div>
           </div>
 
@@ -343,12 +455,18 @@ const SistemaProposito = () => {
             Acessar Questionário
           </button>
 
-          <div className="text-center pt-4">
+          <div className="text-center pt-4 space-y-2">
             <button
-              onClick={() => setCurrentView('dashboard')}
-              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors duration-200"
+              onClick={() => setCurrentView('rh-auth')}
+              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors duration-200 block w-full"
             >
               Acesso para Analista de RH →
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors duration-200"
+            >
+              Sair da Sessão
             </button>
           </div>
         </div>
@@ -369,6 +487,9 @@ const SistemaProposito = () => {
               <h1 className="text-3xl font-bold text-gray-800 mb-2">
                 Olá, {userInfo.nome}!
               </h1>
+              <p className="text-indigo-600 font-medium mb-2">
+                Autenticado como: {userInfo.email}
+              </p>
               <h2 className="text-2xl font-semibold text-gray-700 mb-4">
                 Questionário de Autopercepção
               </h2>
@@ -537,8 +658,11 @@ const SistemaProposito = () => {
             <p className="text-gray-700 mb-4">
               Suas respostas foram enviadas com sucesso para análise da equipe de RH.
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 mb-2">
               Em breve você receberá um retorno sobre seu perfil e recomendações personalizadas.
+            </p>
+            <p className="text-xs text-indigo-600 font-medium">
+              Enviado para: {userInfo.email}
             </p>
           </div>
 
@@ -568,6 +692,7 @@ RELATÓRIO INDIVIDUAL - ANÁLISE DE PROPÓSITO
 DADOS PESSOAIS:
 Nome: ${usuario.nome}
 CPF: ${usuario.cpf}
+Email: ${usuario.email}
 Data da Avaliação: ${usuario.dataRealizacao}
 
 RESULTADO GERAL:
@@ -634,11 +759,11 @@ Data de geração: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLoca
     }
 
     // Dados para CSV
-    const csvHeader = 'Nome,CPF,Data Avaliacao,Score,Status,Competencias Principais,Areas Desenvolvimento\n';
+    const csvHeader = 'Nome,CPF,Email,Data Avaliacao,Score,Status,Competencias Principais,Areas Desenvolvimento\n';
     const csvData = usuarios.map(usuario => {
       const competencias = usuario.analiseClinica.competencias.slice(0, 3).join('; ');
       const areas = usuario.analiseClinica.areasDesenvolvimento.slice(0, 3).join('; ');
-      return `"${usuario.nome}","${usuario.cpf}","${usuario.dataRealizacao}",${usuario.score},"${usuario.status}","${competencias}","${areas}"`;
+      return `"${usuario.nome}","${usuario.cpf}","${usuario.email}","${usuario.dataRealizacao}",${usuario.score},"${usuario.status}","${competencias}","${areas}"`;
     }).join('\n');
 
     // Relatório detalhado
@@ -669,7 +794,7 @@ ${'='.repeat(50)}
 
 ${usuarios.map(usuario => `
 COLABORADOR: ${usuario.nome}
-CPF: ${usuario.cpf} | Data: ${usuario.dataRealizacao}
+CPF: ${usuario.cpf} | Email: ${usuario.email} | Data: ${usuario.dataRealizacao}
 Score: ${usuario.score} pontos | Status: ${usuario.status}
 
 Perfil: ${usuario.analiseClinica.perfil}
@@ -719,12 +844,18 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   <p className="text-gray-600">Análise de Propósito - Resultados dos Colaboradores</p>
                 </div>
               </div>
-              <button
-                onClick={() => setCurrentView('login')}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-              >
-                Voltar ao Login
-              </button>
+                             <div className="flex items-center space-x-4">
+                 <div className="text-sm text-gray-600">
+                   <Mail className="w-4 h-4 inline mr-1" />
+                   {rhUserInfo.email}
+                 </div>
+                 <button
+                   onClick={handleRhAuthenticated}
+                   className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                 >
+                   Sair
+                 </button>
+               </div>
             </div>
           </div>
         </div>
@@ -871,10 +1002,11 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                             <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                               {usuario.nome.charAt(0).toUpperCase()}
                             </div>
-                            <div className="ml-4">
-                              <h3 className="text-lg font-semibold text-gray-800">{usuario.nome}</h3>
-                              <p className="text-gray-600 text-sm">CPF: {usuario.cpf} • {usuario.dataRealizacao}</p>
-                            </div>
+                                                <div className="ml-4">
+                      <h3 className="text-lg font-semibold text-gray-800">{usuario.nome}</h3>
+                      <p className="text-gray-600 text-sm">CPF: {usuario.cpf} • {usuario.dataRealizacao}</p>
+                      <p className="text-gray-500 text-xs">{usuario.email}</p>
+                    </div>
                           </div>
                           <div className="flex items-center space-x-4">
                             <div className="text-right">
@@ -937,6 +1069,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                     <div className="ml-6">
                       <h1 className="text-3xl font-bold text-gray-800">{usuarioSelecionado.nome}</h1>
                       <p className="text-gray-600 mb-2">CPF: {usuarioSelecionado.cpf}</p>
+                      <p className="text-gray-600 mb-2">Email: {usuarioSelecionado.email}</p>
                       <p className="text-sm text-gray-500">Avaliado em: {usuarioSelecionado.dataRealizacao}</p>
                     </div>
                   </div>
@@ -1045,13 +1178,155 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
     );
   };
 
+  // Componente de Autenticação
+  const AuthComponent = () => (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-indigo-100">
+        <div className="text-center mb-8">
+          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
+            <Building2 className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Acesso ao Propósito</h1>
+          <p className="text-gray-600">Informe seu email corporativo para acessar o questionário.</p>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl mb-6">
+            <p className="text-blue-700 text-sm">
+              <strong>Instruções:</strong> Digite seu email corporativo (@atento.com) para acessar o questionário.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Corporativo
+              </label>
+              <div className="relative">
+                <input
+                  type="email"
+                  value={userInfo.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                  placeholder="exemplo@atento.com"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+              </div>
+              {authError && (
+                <p className="text-red-500 text-sm mt-2">
+                  <AlertCircle className="w-4 h-4 mr-1 inline-block" /> {authError}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={handleAuthentication}
+            disabled={!userInfo.email.trim() || !validateAtentoEmail(userInfo.email)}
+            className={`w-full py-3 rounded-xl text-lg font-semibold transition-all duration-200 ${
+              userInfo.email.trim() && validateAtentoEmail(userInfo.email)
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Acessar Questionário
+          </button>
+
+          <div className="text-center pt-4">
+            <button
+              onClick={handleLogout}
+              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors duration-200"
+            >
+              Sair da Sessão
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Componente de Autenticação RH
+  const RhAuthComponent = () => (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-blue-100">
+        <div className="text-center mb-8">
+          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-6">
+            <BarChart3 className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Acesso ao Dashboard RH</h1>
+          <p className="text-gray-600">Autenticação para Analistas de Recursos Humanos</p>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl mb-6">
+            <p className="text-blue-700 text-sm">
+              <strong>Instruções:</strong> Digite seu email corporativo (@atento.com) para acessar o dashboard de RH.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Corporativo
+              </label>
+              <div className="relative">
+                <input
+                  type="email"
+                  value={rhUserInfo.email}
+                  onChange={(e) => handleRhInputChange('email', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  placeholder="exemplo@atento.com"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+              </div>
+              {rhAuthError && (
+                <p className="text-red-500 text-sm mt-2">
+                  <AlertCircle className="w-4 h-4 mr-1 inline-block" /> {rhAuthError}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={handleRhAuthentication}
+            disabled={!rhUserInfo.email.trim() || !validateAtentoEmail(rhUserInfo.email)}
+            className={`w-full py-3 rounded-xl text-lg font-semibold transition-all duration-200 ${
+              rhUserInfo.email.trim() && validateAtentoEmail(rhUserInfo.email)
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Acessar Dashboard RH
+          </button>
+
+          <div className="text-center pt-4">
+            <button
+              onClick={() => setCurrentView('login')}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200"
+            >
+              ← Voltar ao Questionário
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   // Renderização principal
-  if (currentView === 'login') {
+  if (currentView === 'auth') {
+    return <AuthComponent />;
+  } else if (currentView === 'login') {
     return <LoginComponent />;
   } else if (currentView === 'formulario') {
     return <FormularioComponent />;
   } else if (currentView === 'sucesso') {
     return <SucessoComponent />;
+  } else if (currentView === 'rh-auth') {
+    return <RhAuthComponent />;
   } else if (currentView === 'dashboard') {
     return <DashboardComponent />;
   }
