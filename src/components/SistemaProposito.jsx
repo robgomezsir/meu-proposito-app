@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2, Mail, Lock } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2, Mail } from 'lucide-react';
 
 const SistemaProposito = () => {
-  const [currentView, setCurrentView] = useState('formulario'); // formulario, sucesso, dashboard, loginRH
+  const [currentView, setCurrentView] = useState('formulario'); // formulario, sucesso, dashboard
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([[], [], [], []]);
   const [userInfo, setUserInfo] = useState({ nome: '', cpf: '' });
   const [usuarios, setUsuarios] = useState([]); // Simulando banco de dados
   const [showWelcome, setShowWelcome] = useState(true);
-  const [rhCredentials, setRhCredentials] = useState({ email: '', senha: '' });
+  const [rhEmail, setRhEmail] = useState('');
   const [isRhAuthenticated, setIsRhAuthenticated] = useState(false);
 
   // Carregar dados salvos ao inicializar
@@ -203,18 +203,19 @@ const SistemaProposito = () => {
 
   const handleRhLogin = (e) => {
     e.preventDefault();
-    // Verificação simples de email corporativo (deve conter @ e um domínio)
-    if (rhCredentials.email.includes('@') && rhCredentials.senha.trim()) {
+    // Verificação discreta para email corporativo da Atento
+    if (rhEmail.includes('@atento.com') && rhEmail.trim()) {
       setIsRhAuthenticated(true);
       setCurrentView('dashboard');
     } else {
-      alert('Por favor, insira um email corporativo válido e uma senha.');
+      // Mensagem genérica sem revelar o domínio específico
+      alert('Email não autorizado para acesso ao dashboard.');
     }
   };
 
   const handleRhLogout = () => {
     setIsRhAuthenticated(false);
-    setRhCredentials({ email: '', senha: '' });
+    setRhEmail('');
     setCurrentView('formulario');
   };
 
@@ -307,80 +308,7 @@ const SistemaProposito = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Componente de Login RH
-  const LoginRHComponent = () => (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-indigo-100">
-        <div className="text-center mb-8">
-          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-6">
-            <BarChart3 className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Acesso RH</h1>
-          <p className="text-gray-600">Dashboard de Análise de Propósito</p>
-        </div>
 
-        <div className="space-y-6">
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl mb-6">
-            <p className="text-blue-700 text-sm">
-              <strong>Acesso Restrito:</strong> Apenas profissionais de RH com email corporativo podem acessar o dashboard de análise.
-            </p>
-          </div>
-
-          <form onSubmit={handleRhLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Corporativo
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  value={rhCredentials.email}
-                  onChange={(e) => setRhCredentials(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                  placeholder="seu.email@empresa.com"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Senha
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="password"
-                  value={rhCredentials.senha}
-                  onChange={(e) => setRhCredentials(prev => ({ ...prev, senha: e.target.value }))}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Digite sua senha"
-                  required
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
-            >
-              Acessar Dashboard
-            </button>
-          </form>
-
-          <div className="text-center pt-4">
-            <button
-              onClick={() => setCurrentView('formulario')}
-              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors duration-200"
-            >
-              ← Voltar ao Questionário
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   // Componente do Formulário (mesmo código anterior mas sem mostrar score)
   const FormularioComponent = () => {
@@ -448,17 +376,27 @@ const SistemaProposito = () => {
                 </p>
               </div>
               
-              <button
-                onClick={() => setShowWelcome(false)}
-                disabled={!userInfo.nome.trim() || !userInfo.cpf.trim()}
-                className={`px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg ${
-                  userInfo.nome.trim() && userInfo.cpf.trim()
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white hover:shadow-xl transform hover:-translate-y-1'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                Começar Questionário
-              </button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+                <button
+                  onClick={() => setShowWelcome(false)}
+                  disabled={!userInfo.nome.trim() || !userInfo.cpf.trim()}
+                  className={`px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg ${
+                    userInfo.nome.trim() && userInfo.cpf.trim()
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white hover:shadow-xl transform hover:-translate-y-1'
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  Começar Questionário
+                </button>
+                
+                <button
+                  onClick={() => setCurrentView('dashboard')}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                >
+                  <BarChart3 className="w-5 h-5 inline mr-2" />
+                  Dashboard
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -566,28 +504,18 @@ const SistemaProposito = () => {
                 Anterior
               </button>
 
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => setCurrentView('loginRH')}
-                  className="flex items-center px-4 py-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200"
-                >
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Acesso RH
-                </button>
-
-                <button
-                  onClick={nextQuestion}
-                  disabled={!canProceed}
-                  className={`flex items-center px-6 py-3 rounded-full font-semibold transition-all duration-200 ${
-                    canProceed
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  {currentQuestion === 3 ? 'Finalizar' : 'Próxima'}
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </button>
-              </div>
+              <button
+                onClick={nextQuestion}
+                disabled={!canProceed}
+                className={`flex items-center px-6 py-3 rounded-full font-semibold transition-all duration-200 ${
+                  canProceed
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {currentQuestion === 3 ? 'Finalizar' : 'Próxima'}
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </button>
             </div>
           </div>
         </div>
@@ -621,21 +549,12 @@ const SistemaProposito = () => {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={resetFormulario}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-              Realizar Novo Teste
-            </button>
-            
-            <button
-              onClick={() => setCurrentView('loginRH')}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-              Acesso RH
-            </button>
-          </div>
+          <button
+            onClick={resetFormulario}
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+          >
+            Realizar Novo Teste
+          </button>
         </div>
       </div>
     </div>
@@ -1128,17 +1047,62 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
   };
 
   // Renderização principal
-  if (currentView === 'loginRH') {
-    return <LoginRHComponent />;
-  } else if (currentView === 'formulario') {
+  if (currentView === 'formulario') {
     return <FormularioComponent />;
   } else if (currentView === 'sucesso') {
     return <SucessoComponent />;
   } else if (currentView === 'dashboard') {
     // Verificar se está autenticado como RH
     if (!isRhAuthenticated) {
-      setCurrentView('loginRH');
-      return <LoginRHComponent />;
+      // Mostrar modal de login discreto
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-indigo-100">
+            <div className="text-center mb-8">
+              <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mb-6">
+                <BarChart3 className="w-10 h-10 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
+              <p className="text-gray-600">Acesso ao sistema de análise</p>
+            </div>
+
+            <form onSubmit={handleRhLogin} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="email"
+                    value={rhEmail}
+                    onChange={(e) => setRhEmail(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                    placeholder="seu.email@empresa.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+              >
+                Acessar
+              </button>
+            </form>
+
+            <div className="text-center pt-4">
+              <button
+                onClick={() => setCurrentView('formulario')}
+                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors duration-200"
+              >
+                ← Voltar ao Questionário
+              </button>
+            </div>
+          </div>
+        </div>
+      );
     }
     return <DashboardComponent />;
   }
