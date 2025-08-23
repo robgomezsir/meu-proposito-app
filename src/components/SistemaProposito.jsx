@@ -11,6 +11,10 @@ const SistemaProposito = () => {
   const [rhEmail, setRhEmail] = useState('');
   const [isRhAuthenticated, setIsRhAuthenticated] = useState(false);
 
+  // Refs para controle de foco
+  const nomeInputRef = useRef(null);
+  const cpfInputRef = useRef(null);
+
   // Carregar dados salvos ao inicializar
   useEffect(() => {
     const savedUsuarios = localStorage.getItem('usuarios');
@@ -34,6 +38,64 @@ const SistemaProposito = () => {
   useEffect(() => {
     localStorage.setItem('rhAuthenticated', isRhAuthenticated);
   }, [isRhAuthenticated]);
+
+  // Auto-focus no primeiro input quando o componente carrega
+  useEffect(() => {
+    if (showWelcome && nomeInputRef.current) {
+      nomeInputRef.current.focus();
+    }
+  }, [showWelcome]);
+
+  // Formatação automática do CPF
+  const formatarCPF = (valor) => {
+    // Remove tudo que não é dígito
+    const somenteDigitos = valor.replace(/\D/g, '');
+    
+    // Aplica a máscara XXX.XXX.XXX-XX
+    if (somenteDigitos.length <= 11) {
+      return somenteDigitos
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})/, '$1-$2');
+    }
+    return somenteDigitos.slice(0, 11)
+      .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  };
+
+  // Validação básica de CPF
+  const validarCPF = (cpf) => {
+    const somenteDigitos = cpf.replace(/\D/g, '');
+    
+    if (somenteDigitos.length !== 11) return false;
+    
+    // Verifica se todos os dígitos são iguais
+    if (/^(\d)\1{10}$/.test(somenteDigitos)) return false;
+    
+    // Validação dos dígitos verificadores
+    let soma = 0;
+    for (let i = 0; i < 9; i++) {
+      soma += parseInt(somenteDigitos.charAt(i)) * (10 - i);
+    }
+    let resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(somenteDigitos.charAt(9))) return false;
+    
+    soma = 0;
+    for (let i = 0; i < 10; i++) {
+      soma += parseInt(somenteDigitos.charAt(i)) * (11 - i);
+    }
+    resto = (soma * 10) % 11;
+    if (resto === 10 || resto === 11) resto = 0;
+    if (resto !== parseInt(somenteDigitos.charAt(10))) return false;
+    
+    return true;
+  };
+
+  // Validação de nome
+  const validarNome = (nome) => {
+    const nomeFormatado = nome.trim();
+    return nomeFormatado.length >= 2 && /^[a-zA-ZÀ-ÿ\s]+$/.test(nomeFormatado) && nomeFormatado.split(' ').length >= 2;
+  };
 
   // Dados das perguntas (mesmo do código anterior)
   const caracteristicas = [
@@ -232,9 +294,9 @@ const SistemaProposito = () => {
   const iniciarQuestionario = (e) => {
     e.preventDefault();
     
-    // Verificar se os campos estão preenchidos
-    if (!userInfo.nome.trim() || !userInfo.cpf.trim()) {
-      alert('Por favor, preencha todos os campos obrigatórios.');
+    // Verificar se os campos estão preenchidos e válidos
+    if (!validarNome(userInfo.nome) || !validarCPF(userInfo.cpf)) {
+      alert('Por favor, preencha todos os campos obrigatórios corretamente.');
       return;
     }
     
@@ -341,92 +403,230 @@ const SistemaProposito = () => {
   const FormularioComponent = () => {
     if (showWelcome) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center p-4">
-          <div className="max-w-2xl w-full bg-white rounded-3xl shadow-2xl p-8 border border-indigo-100">
-            <div className="text-center">
-              <div className="mx-auto w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
-                <Heart className="w-10 h-10 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                Questionário de Autopercepção
-              </h1>
-              <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-                Identificação do Participante
-              </h2>
-              
-              <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-indigo-100">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 text-left">
-                      Nome Completo
-                    </label>
-                    <input
-                      type="text"
-                      value={userInfo.nome}
-                      onChange={(e) => setUserInfo(prev => ({ ...prev, nome: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                      placeholder="Digite seu nome completo"
-                      autoComplete="name"
-                    />
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl mx-auto">
+            {/* Card Principal */}
+            <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+              {/* Header com gradiente */}
+              <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 p-8 text-white">
+                <div className="text-center">
+                  <div className="mx-auto w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-6 shadow-lg">
+                    <Heart className="w-12 h-12 text-white" />
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 text-left">
-                      CPF
-                    </label>
-                    <input
-                      type="text"
-                      value={userInfo.cpf}
-                      onChange={(e) => setUserInfo(prev => ({ ...prev, cpf: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                      placeholder="Digite seu CPF"
-                      autoComplete="off"
-                      maxLength="14"
-                    />
-                  </div>
+                  <h1 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight">
+                    Questionário de Autopercepção
+                  </h1>
+                  <p className="text-xl text-blue-100 font-medium">
+                    Identificação do Participante
+                  </p>
                 </div>
               </div>
 
-              <div className="space-y-4 text-left bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 mb-8">
-                <p className="flex items-start">
-                  <span className="text-2xl mr-2">👉</span>
-                  <span className="text-gray-700">Este teste é baseado em 4 perguntas simples.</span>
-                </p>
-                <p className="flex items-start">
-                  <span className="text-2xl mr-2">⚠️</span>
-                  <span className="text-gray-700">Não existem respostas certas ou erradas – o importante é ser você mesmo(a).</span>
-                </p>
-                <p className="flex items-start">
-                  <span className="text-2xl mr-2">📌</span>
-                  <span className="text-gray-700">Em cada pergunta você deverá escolher exatamente 5 opções.</span>
-                </p>
-                <p className="flex items-start">
-                  <span className="text-2xl mr-2">⛔</span>
-                  <span className="text-gray-700">Se tentar escolher mais de 5, será necessário desmarcar uma das respostas anteriores.</span>
-                </p>
+              {/* Conteúdo do formulário */}
+              <div className="p-8 md:p-12">
+                {/* Formulário de Cadastro */}
+                <div className="max-w-2xl mx-auto mb-8">
+                  <form onSubmit={iniciarQuestionario} className="space-y-6">
+                    {/* Campo Nome */}
+                    <div className="group">
+                      <label className="block text-sm font-semibold text-gray-800 mb-3 transition-colors duration-200 group-focus-within:text-indigo-600">
+                        <User className="w-4 h-4 inline mr-2" />
+                        Nome Completo *
+                      </label>
+                      <div className="relative">
+                        <input
+                          ref={nomeInputRef}
+                          type="text"
+                          value={userInfo.nome}
+                          onChange={(e) => setUserInfo(prev => ({ ...prev, nome: e.target.value }))}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              cpfInputRef.current?.focus();
+                            }
+                          }}
+                          className={`w-full px-6 py-4 text-lg border-2 rounded-2xl focus:ring-4 transition-all duration-200 bg-gray-50/50 hover:bg-white placeholder-gray-400 ${
+                            userInfo.nome.trim() === '' 
+                              ? 'border-gray-200 hover:border-gray-300 focus:ring-indigo-100 focus:border-indigo-500'
+                              : validarNome(userInfo.nome)
+                                ? 'border-green-300 focus:ring-green-100 focus:border-green-500 bg-green-50/30'
+                                : 'border-red-300 focus:ring-red-100 focus:border-red-500 bg-red-50/30'
+                          }`}
+                          placeholder="Ex: João Silva Santos"
+                          autoComplete="name"
+                        />
+                        {/* Ícone de validação */}
+                        {userInfo.nome.trim() !== '' && (
+                          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                            {validarNome(userInfo.nome) ? (
+                              <CheckCircle2 className="w-6 h-6 text-green-500" />
+                            ) : (
+                              <Circle className="w-6 h-6 text-red-500" />
+                            )}
+                          </div>
+                        )}
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
+                      </div>
+                      {/* Mensagem de validação */}
+                      {userInfo.nome.trim() !== '' && !validarNome(userInfo.nome) && (
+                        <p className="mt-2 text-sm text-red-600 flex items-center">
+                          <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
+                          Digite seu nome completo (nome e sobrenome)
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Campo CPF */}
+                    <div className="group">
+                      <label className="block text-sm font-semibold text-gray-800 mb-3 transition-colors duration-200 group-focus-within:text-indigo-600">
+                        <FileText className="w-4 h-4 inline mr-2" />
+                        CPF *
+                      </label>
+                      <div className="relative">
+                        <input
+                          ref={cpfInputRef}
+                          type="text"
+                          value={userInfo.cpf}
+                          onChange={(e) => {
+                            const valorFormatado = formatarCPF(e.target.value);
+                            setUserInfo(prev => ({ ...prev, cpf: valorFormatado }));
+                          }}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              iniciarQuestionario(e);
+                            }
+                          }}
+                          className={`w-full px-6 py-4 text-lg border-2 rounded-2xl focus:ring-4 transition-all duration-200 bg-gray-50/50 hover:bg-white placeholder-gray-400 ${
+                            userInfo.cpf.trim() === '' 
+                              ? 'border-gray-200 hover:border-gray-300 focus:ring-indigo-100 focus:border-indigo-500'
+                              : validarCPF(userInfo.cpf)
+                                ? 'border-green-300 focus:ring-green-100 focus:border-green-500 bg-green-50/30'
+                                : 'border-red-300 focus:ring-red-100 focus:border-red-500 bg-red-50/30'
+                          }`}
+                          placeholder="000.000.000-00"
+                          autoComplete="off"
+                          maxLength="14"
+                        />
+                        {/* Ícone de validação */}
+                        {userInfo.cpf.trim() !== '' && (
+                          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                            {validarCPF(userInfo.cpf) ? (
+                              <CheckCircle2 className="w-6 h-6 text-green-500" />
+                            ) : (
+                              <Circle className="w-6 h-6 text-red-500" />
+                            )}
+                          </div>
+                        )}
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
+                      </div>
+                      {/* Mensagem de validação */}
+                      {userInfo.cpf.trim() !== '' && !validarCPF(userInfo.cpf) && (
+                        <p className="mt-2 text-sm text-red-600 flex items-center">
+                          <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
+                          Digite um CPF válido
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Botão de envio */}
+                    <div className="pt-4">
+                      <button
+                        type="submit"
+                        disabled={!validarNome(userInfo.nome) || !validarCPF(userInfo.cpf)}
+                        className={`w-full py-4 px-8 rounded-2xl text-xl font-bold transition-all duration-300 transform ${
+                          validarNome(userInfo.nome) && validarCPF(userInfo.cpf)
+                            ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 hover:from-indigo-700 hover:via-purple-700 hover:to-blue-700 text-white shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]'
+                            : 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-inner'
+                        }`}
+                      >
+                        {validarNome(userInfo.nome) && validarCPF(userInfo.cpf) ? (
+                          <>
+                            <ArrowRight className="w-6 h-6 inline mr-2" />
+                            Começar Questionário
+                          </>
+                        ) : (
+                          <>
+                            {!userInfo.nome.trim() || !userInfo.cpf.trim() ? 'Preencha todos os campos obrigatórios' : 'Verifique os dados digitados'}
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Instruções com design melhorado */}
+                <div className="max-w-3xl mx-auto mb-8">
+                  <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-3xl p-8 border border-indigo-100/50">
+                    <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
+                      📋 Instruções Importantes
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="flex items-start group hover:bg-white/50 rounded-xl p-4 transition-colors duration-200">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-4 group-hover:bg-blue-200 transition-colors duration-200">
+                            <span className="text-xl">👉</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-800">4 Perguntas Simples</p>
+                            <p className="text-sm text-gray-600 mt-1">Este teste é baseado em questões objetivas e diretas.</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start group hover:bg-white/50 rounded-xl p-4 transition-colors duration-200">
+                          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-4 group-hover:bg-green-200 transition-colors duration-200">
+                            <span className="text-xl">✨</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-800">Seja Autêntico</p>
+                            <p className="text-sm text-gray-600 mt-1">Não há respostas certas ou erradas. Seja você mesmo!</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-start group hover:bg-white/50 rounded-xl p-4 transition-colors duration-200">
+                          <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-4 group-hover:bg-purple-200 transition-colors duration-200">
+                            <span className="text-xl">📌</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-800">5 Opções por Pergunta</p>
+                            <p className="text-sm text-gray-600 mt-1">Escolha exatamente 5 alternativas em cada questão.</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start group hover:bg-white/50 rounded-xl p-4 transition-colors duration-200">
+                          <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center mr-4 group-hover:bg-orange-200 transition-colors duration-200">
+                            <span className="text-xl">🔄</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-800">Mudança de Opções</p>
+                            <p className="text-sm text-gray-600 mt-1">Você pode alterar suas escolhas antes de prosseguir.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botões de ação */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+                  <button
+                    onClick={() => setCurrentView('dashboard')}
+                    className="flex items-center justify-center bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  >
+                    <BarChart3 className="w-5 h-5 mr-2" />
+                    Acesso RH
+                  </button>
+                </div>
               </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-                <button
-                  onClick={iniciarQuestionario}
-                  disabled={!userInfo.nome.trim() || !userInfo.cpf.trim()}
-                  className={`px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg ${
-                    userInfo.nome.trim() && userInfo.cpf.trim()
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white hover:shadow-xl transform hover:-translate-y-1'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    }`}
-                >
-                  Começar Questionário
-                </button>
-                
-                <button
-                  onClick={() => setCurrentView('dashboard')}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                >
-                  <BarChart3 className="w-5 h-5 inline mr-2" />
-                  Acesso RH
-                </button>
-              </div>
+            </div>
+
+            {/* Rodapé com informações adicionais */}
+            <div className="text-center mt-8">
+              <p className="text-sm text-gray-500">
+                🔒 Suas informações são seguras e confidenciais
+              </p>
             </div>
           </div>
         </div>
