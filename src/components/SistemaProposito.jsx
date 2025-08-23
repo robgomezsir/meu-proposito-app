@@ -1078,7 +1078,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                     value={rhEmail}
                     onChange={(e) => setRhEmail(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                    placeholder="seu.email@empresa.com"
+                    placeholder="Digite seu email"
                     required
                   />
                 </div>
