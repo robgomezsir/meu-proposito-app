@@ -394,7 +394,7 @@ const SistemaProposito = () => {
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                 >
                   <BarChart3 className="w-5 h-5 inline mr-2" />
-                  Dashboard
+                  Acesso RH
                 </button>
               </div>
             </div>
