@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2 } from 'lucide-react';
 
 const SistemaProposito = () => {
   const [currentView, setCurrentView] = useState('login'); // login, formulario, sucesso, dashboard
