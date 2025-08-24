@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
       
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v3
       with:
         node-version: '18'
         cache: 'npm'
@@ -23,15 +23,12 @@ jobs:
     - name: Set environment for Render
       run: |
         echo "REACT_APP_ENV=render" >> $GITHUB_ENV
-        
-    - name: Set homepage for Render
-      run: npm run set-homepage
       
     - name: Build for Render
       run: npm run build
       
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
         name: build-files
         path: build/
@@ -42,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v2
       with:
         name: build-files
         path: build/

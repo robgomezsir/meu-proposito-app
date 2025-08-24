@@ -10,11 +10,8 @@
     "react-dom": "^18.0.0"
   },
   "scripts": {
-    "set-homepage": "node setHomepage.js",
-    "start": "npm run set-homepage && react-scripts start",
+    "start": "react-scripts start",
     "build": "react-scripts build",
-    "build-github": "set \"REACT_APP_ENV=github\" && npm run set-homepage && react-scripts build",
-    "build-render": "set \"REACT_APP_ENV=render\" && npm run set-homepage && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
