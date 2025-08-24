@@ -816,7 +816,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                    }`}
                  >
                    <BarChart3 className="w-5 h-5 mr-2" />
-                   SAIR
+                   Exportar Dados
                  </button>
                 
                 <button
@@ -839,7 +839,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   </div>
                   <div className="ml-3">
                                                               <p className="text-sm text-blue-700">
-                        <strong>💾 Dados Persistidos:</strong> Todos os registros são salvos na nuvem! Use "SAIR" para sair do sistema.                     </p>
+                        <strong>💾 Dados Persistidos:</strong> Todos os registros são salvos na nuvem! Use "Exportar dados" para salvar uma cópia do sistema.                     </p>
                   </div>
                 </div>
               </div>
