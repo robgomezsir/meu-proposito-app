@@ -2,7 +2,7 @@ services:
   - type: web
     name: meu-proposito-app
     env: static
-    buildCommand: npm run build-render
+    buildCommand: npm run build
     staticPublishPath: ./build
     envVars:
       - key: NODE_VERSION
