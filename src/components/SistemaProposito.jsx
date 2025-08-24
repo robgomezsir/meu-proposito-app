@@ -125,15 +125,16 @@ const SistemaProposito = () => {
   };
 
   // Dados das perguntas (mesmo do código anterior)
-  const caracteristicas = [
+  // Dados das perguntas (memoizados para evitar recriações)
+  const caracteristicas = useMemo(() => [
     'receptiva', 'feliz', 'estudiosa', 'sensata', 'realista', 'racional', 'detalhista', 'perfeccionista',
     'verdadeira', 'confiante', 'inteligente', 'generosa', 'dedicada', 'educada', 'amorosa', 'gentil',
     'rígida', 'paciente', 'comunicativa', 'coerente', 'organizada', 'prática', 'bom humor', 'tímida',
     'prestativa', 'líder', 'respeitadora', 'proativa', 'esforçada', 'sensível', 'responsável',
     'gosta de gente', 'descolada', 'séria', 'engraçada', 'vaidosa'
-  ];
+  ], []);
 
-  const frasesVida = [
+  const frasesVida = useMemo(() => [
     'Sempre que alguém me procura para contar os problemas eu escuto e ajudo',
     'Meus amigos/familiares podem contar comigo em momentos alegres e tristes',
     'Se vejo alguém derrubando a carteira de dinheiro sem perceber, eu aviso',
@@ -147,38 +148,38 @@ const SistemaProposito = () => {
     'Mesmo com muitas dificuldades eu não desisto fácil',
     'Respeito a opinião das outras pessoas',
     'Não minto para as pessoas'
-  ];
+  ], []);
 
-  const valores = [
+  const valores = useMemo(() => [
     'Trabalhar com Amor', 'iniciativa', 'crescimento pessoal', 'cuidar/importar-se', 'Respeito',
     'Honestidade/Integridade', 'excelência em servir', 'compaixão', 'empatia', 'aprendizagem contínua',
     'comprometimento', 'responsabilidade', 'ética', 'trabalho produtivo', 'escutar', 'família',
     'generosidade', 'orientar/guiar'
-  ];
+  ], []);
 
-  const pesosCaracteristicas = {
+  const pesosCaracteristicas = useMemo(() => ({
     'verdadeira': 3, 'amorosa': 3, 'gentil': 3, 'respeitadora': 3, 'gosta de gente': 3, 'generosa': 3,
     'receptiva': 2, 'detalhista': 2, 'dedicada': 2, 'comunicativa': 2, 'prestativa': 2, 'responsável': 2,
     'feliz': 2, 'educada': 2, 'coerente': 2, 'líder': 2, 'organizada': 2, 'sensata': 2, 'inteligente': 2,
     'bom humor': 2, 'esforçada': 2, 'paciente': 2, 'sensível': 2,
     'perfeccionista': 1, 'descolada': 1, 'confiante': 1, 'prática': 1, 'proativa': 1, 'séria': 1,
     'realista': 1, 'rígida': 1, 'engraçada': 1, 'racional': 1, 'tímida': 1, 'vaidosa': 1, 'estudiosa': 1
-  };
+  }), []);
 
-  const pesosFrases = {
+  const pesosFrases = useMemo(() => ({
     2: 5, 4: 5, 5: 5, 6: 5, 8: 5,
     11: 4, 12: 4
-  };
+  }), []);
 
-  const pesosValores = {
+  const pesosValores = useMemo(() => ({
     'Trabalhar com Amor': 9, 'Honestidade/Integridade': 9, 'excelência em servir': 9,
     'comprometimento': 9, 'trabalho produtivo': 9,
     'cuidar/importar-se': 8, 'Respeito': 8, 'empatia': 8, 'família': 8, 'generosidade': 8, 'escutar': 8,
     'iniciativa': 7, 'crescimento pessoal': 7, 'compaixão': 7, 'aprendizagem contínua': 7,
     'responsabilidade': 7, 'ética': 7, 'orientar/guiar': 7
-  };
+  }), []);
 
-  const questions = [
+  const questions = useMemo(() => [
     {
       title: "Como você acha que as pessoas te veem?",
       subtitle: "Escolha exatamente 5 características",
@@ -199,7 +200,7 @@ const SistemaProposito = () => {
       subtitle: "Assinale os 5 mais importantes para você",
       options: valores
     }
-  ];
+  ], [caracteristicas, frasesVida, valores]);
 
   const calculateScore = (userAnswers = answers) => {
     let total = 0;

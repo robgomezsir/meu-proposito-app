@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef, useEffect, memo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { User, FileText, Heart, Sparkles, Shield, Clock } from 'lucide-react';
 
-const RegistrationForm = ({ 
+// Componente memoizado para evitar re-renderizações desnecessárias
+const RegistrationForm = memo(({ 
   userInfo, 
   onInputChange, 
   onSubmit, 
@@ -13,6 +14,17 @@ const RegistrationForm = ({
   validarCPF, 
   formatarCPF 
 }) => {
+  // Refs para controle de foco
+  const nomeInputRef = useRef(null);
+  const cpfInputRef = useRef(null);
+
+  // Auto-focus no campo nome ao carregar
+  useEffect(() => {
+    if (nomeInputRef.current) {
+      nomeInputRef.current.focus();
+    }
+  }, []); // Array vazio garante que execute apenas uma vez
+
   // Validação simples e estática
   const isFormValid = userInfo.nome.trim() !== '' && userInfo.cpf.trim() !== '';
 
@@ -49,6 +61,7 @@ const RegistrationForm = ({
                   </label>
                   <div className="relative">
                     <Input
+                      ref={nomeInputRef}
                       type="text"
                       value={userInfo.nome}
                       onChange={onInputChange}
@@ -68,6 +81,7 @@ const RegistrationForm = ({
                   </label>
                   <div className="relative">
                     <Input
+                      ref={cpfInputRef}
                       type="text"
                       value={userInfo.cpf}
                       onChange={(e) => {
@@ -195,6 +209,9 @@ const RegistrationForm = ({
       </div>
     </div>
   );
-};
+});
+
+// Adicionar displayName para debugging
+RegistrationForm.displayName = 'RegistrationForm';
 
 export default RegistrationForm;
