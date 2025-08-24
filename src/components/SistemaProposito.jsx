@@ -73,8 +73,8 @@ const SistemaProposito = () => {
     }
   }, [showWelcome]);
 
-  // Formatação automática do CPF
-  const formatarCPF = (valor) => {
+  // Formatação automática do CPF - otimizada com useCallback
+  const formatarCPF = useCallback((valor) => {
     // Remove tudo que não é dígito
     const somenteDigitos = valor.replace(/\D/g, '');
     
@@ -87,10 +87,10 @@ const SistemaProposito = () => {
     }
     return somenteDigitos.slice(0, 11)
       .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  };
+  }, []);
 
-  // Validação básica de CPF
-  const validarCPF = (cpf) => {
+  // Validação básica de CPF - otimizada com useCallback
+  const validarCPF = useCallback((cpf) => {
     const somenteDigitos = cpf.replace(/\D/g, '');
     
     if (somenteDigitos.length !== 11) return false;
@@ -116,13 +116,13 @@ const SistemaProposito = () => {
     if (resto !== parseInt(somenteDigitos.charAt(10))) return false;
     
     return true;
-  };
+  }, []);
 
-  // Validação de nome
-  const validarNome = (nome) => {
+  // Validação de nome - otimizada com useCallback
+  const validarNome = useCallback((nome) => {
     const nomeFormatado = nome.trim();
     return nomeFormatado.length >= 2 && /^[a-zA-ZÀ-ÿ\s]+$/.test(nomeFormatado) && nomeFormatado.split(' ').length >= 2;
-  };
+  }, []);
 
   // Dados das perguntas (mesmo do código anterior)
   const caracteristicas = [
@@ -308,14 +308,18 @@ const SistemaProposito = () => {
     setCurrentView('formulario');
   }, []);
 
-  // Função para atualizar campos do usuário
-  const handleInputChange = (e) => {
+  // Função para atualizar campos do usuário - otimizada para evitar re-renders
+  const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
-    setUserInfo(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+    setUserInfo(prev => {
+      // Só atualiza se o valor realmente mudou
+      if (prev[name] === value) return prev;
+      return {
+        ...prev,
+        [name]: value
+      };
+    });
+  }, []);
 
   // Função para iniciar o questionário
   const iniciarQuestionario = async (e) => {
@@ -567,7 +571,7 @@ const SistemaProposito = () => {
 
 
   // Componente do Formulário
-  const FormularioComponent = useCallback(() => {
+  const renderFormulario = () => {
     if (showWelcome) {
       return (
         <RegistrationForm
@@ -600,7 +604,7 @@ const SistemaProposito = () => {
         canProceed={canProceed}
       />
     );
-  }, [showWelcome, userInfo, currentQuestion, answers, questions, handleInputChange, iniciarQuestionario, validarNome, validarCPF, formatarCPF, handleOptionClick, nextQuestion, prevQuestion]);
+  };
 
   // Componente de Sucesso
   const SucessoComponent = useCallback(() => (
@@ -1111,7 +1115,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
 
   // Renderização principal
   if (currentView === 'formulario') {
-    return <FormularioComponent />;
+            return renderFormulario();
   } else if (currentView === 'sucesso') {
     return <SucessoComponent />;
   } else if (currentView === 'dashboard') {
