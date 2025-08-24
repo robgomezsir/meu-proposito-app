@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { User, FileText, Eye } from 'lucide-react';
 
 const RegistrationForm = ({ 
@@ -16,12 +16,12 @@ const RegistrationForm = ({
   const nomeInputRef = useRef(null);
   const cpfInputRef = useRef(null);
 
-  // Auto-focus no primeiro input quando o componente carrega
+  // Auto-focus no primeiro input apenas na primeira renderização
   useEffect(() => {
-    if (showWelcome && nomeInputRef.current) {
+    if (nomeInputRef.current) {
       nomeInputRef.current.focus();
     }
-  }, [showWelcome]);
+  }, []); // Array vazio para executar apenas uma vez
 
   // Formatação automática do CPF - usando useCallback para evitar re-renders
   const formatarCPFLocal = useCallback((valor) => {
@@ -85,7 +85,7 @@ const RegistrationForm = ({
     } else {
       onInputChange({ target: { name, value } });
     }
-  }, [formatarCPFLocal, onInputChange]);
+  }, []); // Sem dependências para evitar re-criação da função
 
   // Função para iniciar o questionário
   const iniciarQuestionarioLocal = useCallback((e) => {
@@ -106,10 +106,10 @@ const RegistrationForm = ({
     onRhAccess();
   }, [onRhAccess]);
 
-  // Verificação em tempo real dos campos
-  const nomeValido = validarNomeLocal(userInfo.nome);
-  const cpfValido = validarCPFLocal(userInfo.cpf);
-  const podeEnviar = nomeValido && cpfValido;
+  // Verificação em tempo real dos campos - usando useMemo para evitar recálculos
+  const nomeValido = useMemo(() => validarNomeLocal(userInfo.nome), [userInfo.nome, validarNomeLocal]);
+  const cpfValido = useMemo(() => validarCPFLocal(userInfo.cpf), [userInfo.cpf, validarCPFLocal]);
+  const podeEnviar = useMemo(() => nomeValido && cpfValido, [nomeValido, cpfValido]);
 
   // Handler para Enter key
   const handleKeyPress = useCallback((e) => {
