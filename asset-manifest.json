@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/meu-proposito-app/static/css/main.39187dbd.css",
-    "main.js": "/meu-proposito-app/static/js/main.11d6d097.js",
+    "main.js": "/meu-proposito-app/static/js/main.f69dfc08.js",
     "index.html": "/meu-proposito-app/index.html",
     "main.39187dbd.css.map": "/meu-proposito-app/static/css/main.39187dbd.css.map",
-    "main.11d6d097.js.map": "/meu-proposito-app/static/js/main.11d6d097.js.map"
+    "main.f69dfc08.js.map": "/meu-proposito-app/static/js/main.f69dfc08.js.map"
   },
   "entrypoints": [
     "static/css/main.39187dbd.css",
-    "static/js/main.11d6d097.js"
+    "static/js/main.f69dfc08.js"
   ]
 }
