@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: meu-proposito-app
+    env: static
+    buildCommand: npm run build-render
+    staticPublishPath: ./build
+    envVars:
+      - key: NODE_VERSION
+        value: 18.0.0
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

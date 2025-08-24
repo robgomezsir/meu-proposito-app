@@ -1,0 +1,55 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Set environment for Render
+      run: |
+        echo "REACT_APP_ENV=render" >> $GITHUB_ENV
+        
+    - name: Set homepage for Render
+      run: npm run set-homepage
+      
+    - name: Build for Render
+      run: npm run build
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-files
+        path: build/
+        retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-files
+        path: build/
+        
+    - name: Deploy to Render
+      run: |
+        echo "Build completed successfully for Render deployment"
+        echo "Please configure your Render service to pull from this repository"
+        echo "and set the build command to: npm run build-render"
+        echo "and the publish directory to: build"
