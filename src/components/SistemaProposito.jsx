@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2, Mail } from 'lucide-react';
 import { adicionarUsuario, buscarUsuarios, deletarTodosUsuarios, verificarCPFExistente } from '../firebase/services';
 import { testarConexaoFirebase, limparDadosTeste } from '../firebase/test-connection';
+import RegistrationForm from './RegistrationForm';
+import QuestionnaireLayout from './QuestionnaireLayout';
+import SuccessScreen from './SuccessScreen';
 
 const SistemaProposito = () => {
   const [currentView, setCurrentView] = useState('formulario'); // formulario, sucesso, dashboard
@@ -564,236 +567,18 @@ const SistemaProposito = () => {
 
 
   // Componente do Formulário
-  const FormularioComponent = () => {
+  const FormularioComponent = useCallback(() => {
     if (showWelcome) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
-          <div className="w-full max-w-4xl mx-auto">
-            {/* Card Principal */}
-            <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-              {/* Header com gradiente */}
-              <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 p-8 text-white">
-                <div className="text-center">
-                  <div className="mx-auto w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-6 shadow-lg">
-                    <Heart className="w-12 h-12 text-white" />
-                  </div>
-                  <h1 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight">
-                    Questionário de Autopercepção
-                  </h1>
-                  <p className="text-xl text-blue-100 font-medium">
-                    Identificação do Participante
-                  </p>
-                </div>
-              </div>
-
-              {/* Conteúdo do formulário */}
-              <div className="p-8 md:p-12">
-                {/* Formulário de Cadastro */}
-                <div className="max-w-2xl mx-auto mb-8">
-                  <form onSubmit={iniciarQuestionario} className="space-y-6">
-                    {/* Campo Nome */}
-                    <div className="group">
-                      <label className="block text-sm font-semibold text-gray-800 mb-3 transition-colors duration-200 group-focus-within:text-indigo-600">
-                        <User className="w-4 h-4 inline mr-2" />
-                        Nome Completo *
-                      </label>
-                      <div className="relative">
-                        <input
-                          ref={nomeInputRef}
-                          type="text"
-                          value={userInfo.nome}
-                          onChange={(e) => setUserInfo(prev => ({ ...prev, nome: e.target.value }))}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              cpfInputRef.current?.focus();
-                            }
-                          }}
-                          className={`w-full px-6 py-4 text-lg border-2 rounded-2xl focus:ring-4 transition-all duration-200 bg-gray-50/50 hover:bg-white placeholder-gray-400 ${
-                            userInfo.nome.trim() === '' 
-                              ? 'border-gray-200 hover:border-gray-300 focus:ring-indigo-100 focus:border-indigo-500'
-                              : validarNome(userInfo.nome)
-                                ? 'border-green-300 focus:ring-green-100 focus:border-green-500 bg-green-50/30'
-                                : 'border-red-300 focus:ring-red-100 focus:border-red-500 bg-red-50/30'
-                          }`}
-                          placeholder="Ex: João Silva Santos"
-                          autoComplete="name"
-                        />
-                        {/* Ícone de validação */}
-                        {userInfo.nome.trim() !== '' && (
-                          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                            {validarNome(userInfo.nome) ? (
-                              <CheckCircle2 className="w-6 h-6 text-green-500" />
-                            ) : (
-                              <Circle className="w-6 h-6 text-red-500" />
-                            )}
-                          </div>
-                        )}
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
-                      </div>
-                      {/* Mensagem de validação */}
-                      {userInfo.nome.trim() !== '' && !validarNome(userInfo.nome) && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center">
-                          <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
-                          Digite seu nome completo (nome e sobrenome)
-                        </p>
-                      )}
-                    </div>
-                    
-                    {/* Campo CPF */}
-                    <div className="group">
-                      <label className="block text-sm font-semibold text-gray-800 mb-3 transition-colors duration-200 group-focus-within:text-indigo-600">
-                        <FileText className="w-4 h-4 inline mr-2" />
-                        CPF *
-                      </label>
-                      <div className="relative">
-                        <input
-                          ref={cpfInputRef}
-                          type="text"
-                          value={userInfo.cpf}
-                          onChange={(e) => {
-                            const valorFormatado = formatarCPF(e.target.value);
-                            setUserInfo(prev => ({ ...prev, cpf: valorFormatado }));
-                          }}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              iniciarQuestionario(e);
-                            }
-                          }}
-                          className={`w-full px-6 py-4 text-lg border-2 rounded-2xl focus:ring-4 transition-all duration-200 bg-gray-50/50 hover:bg-white placeholder-gray-400 ${
-                            userInfo.cpf.trim() === '' 
-                              ? 'border-gray-200 hover:border-gray-300 focus:ring-indigo-100 focus:border-indigo-500'
-                              : validarCPF(userInfo.cpf)
-                                ? 'border-green-300 focus:ring-green-100 focus:border-green-500 bg-green-50/30'
-                                : 'border-red-300 focus:ring-red-100 focus:border-red-500 bg-red-50/30'
-                          }`}
-                          placeholder="000.000.000-00"
-                          autoComplete="off"
-                          maxLength="14"
-                        />
-                        {/* Ícone de validação */}
-                        {userInfo.cpf.trim() !== '' && (
-                          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                            {validarCPF(userInfo.cpf) ? (
-                              <CheckCircle2 className="w-6 h-6 text-green-500" />
-                            ) : (
-                              <Circle className="w-6 h-6 text-red-500" />
-                            )}
-                          </div>
-                        )}
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
-                      </div>
-                      {/* Mensagem de validação */}
-                      {userInfo.cpf.trim() !== '' && !validarCPF(userInfo.cpf) && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center">
-                          <span className="w-1 h-1 bg-red-500 rounded-full mr-2"></span>
-                          Digite um CPF válido
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Botão de envio */}
-                    <div className="pt-4">
-                      <button
-                        type="submit"
-                        disabled={!validarNome(userInfo.nome) || !validarCPF(userInfo.cpf)}
-                        className={`w-full py-4 px-8 rounded-2xl text-xl font-bold transition-all duration-300 transform ${
-                          validarNome(userInfo.nome) && validarCPF(userInfo.cpf)
-                            ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 hover:from-indigo-700 hover:via-purple-700 hover:to-blue-700 text-white shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]'
-                            : 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-inner'
-                        }`}
-                      >
-                        {validarNome(userInfo.nome) && validarCPF(userInfo.cpf) ? (
-                          <>
-                            <ArrowRight className="w-6 h-6 inline mr-2" />
-                            Começar Questionário
-                          </>
-                        ) : (
-                          <>
-                            {!userInfo.nome.trim() || !userInfo.cpf.trim() ? 'Preencha todos os campos obrigatórios' : 'Verifique os dados digitados'}
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-
-                {/* Instruções com design melhorado */}
-                <div className="max-w-3xl mx-auto mb-8">
-                  <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-3xl p-8 border border-indigo-100/50">
-                    <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
-                      📋 Instruções Importantes
-                    </h3>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div className="flex items-start group hover:bg-white/50 rounded-xl p-4 transition-colors duration-200">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-4 group-hover:bg-blue-200 transition-colors duration-200">
-                            <span className="text-xl">👉</span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-800">4 Perguntas Simples</p>
-                            <p className="text-sm text-gray-600 mt-1">Este teste é baseado em questões objetivas e diretas.</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-start group hover:bg-white/50 rounded-xl p-4 transition-colors duration-200">
-                          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-4 group-hover:bg-green-200 transition-colors duration-200">
-                            <span className="text-xl">✨</span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-800">Seja Autêntico</p>
-                            <p className="text-sm text-gray-600 mt-1">Não há respostas certas ou erradas. Seja você mesmo!</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="flex items-start group hover:bg-white/50 rounded-xl p-4 transition-colors duration-200">
-                          <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-4 group-hover:bg-purple-200 transition-colors duration-200">
-                            <span className="text-xl">📌</span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-800">5 Opções por Pergunta</p>
-                            <p className="text-sm text-gray-600 mt-1">Escolha exatamente 5 alternativas em cada questão.</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-start group hover:bg-white/50 rounded-xl p-4 transition-colors duration-200">
-                          <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center mr-4 group-hover:bg-orange-200 transition-colors duration-200">
-                            <span className="text-xl">🔄</span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-800">Mudança de Opções</p>
-                            <p className="text-sm text-gray-600 mt-1">Você pode alterar suas escolhas antes de prosseguir.</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Botões de ação */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-                  <button
-                    onClick={() => setCurrentView('dashboard')}
-                    className="flex items-center justify-center bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                  >
-                    <BarChart3 className="w-5 h-5 mr-2" />
-                    Acesso RH
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Rodapé com informações adicionais */}
-            <div className="text-center mt-8">
-              <p className="text-sm text-gray-500">
-                🔒 Suas informações são seguras e confidenciais
-              </p>
-            </div>
-          </div>
-        </div>
+        <RegistrationForm
+          userInfo={userInfo}
+          onInputChange={handleInputChange}
+          onSubmit={iniciarQuestionario}
+          onRhAccess={() => setCurrentView('dashboard')}
+          validarNome={validarNome}
+          validarCPF={validarCPF}
+          formatarCPF={formatarCPF}
+        />
       );
     }
 
@@ -802,173 +587,30 @@ const SistemaProposito = () => {
     const canProceed = currentAnswers.length === 5;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-indigo-100">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold text-gray-800">
-                Pergunta {currentQuestion + 1} de 4
-              </h1>
-              <div className="text-sm text-gray-600">
-                {Math.round(((currentQuestion + 1) / 4) * 100)}% concluído
-              </div>
-            </div>
-            
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${((currentQuestion + 1) / 4) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-6 border border-indigo-100">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">
-              {currentQuestionData.title}
-            </h2>
-            <p className="text-lg text-gray-600 mb-6">
-              {currentQuestionData.subtitle}
-            </p>
-            
-            <div className="mb-6">
-              {currentAnswers.length === 5 ? (
-                <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-xl">
-                  <p className="text-green-700 font-semibold">
-                    ✅ Perfeito! Você selecionou exatamente 5 opções.
-                  </p>
-                </div>
-              ) : currentAnswers.length < 5 ? (
-                <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl">
-                  <p className="text-blue-700 font-semibold">
-                    📌 Selecione {5 - currentAnswers.length} opção(ões) para continuar.
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-xl">
-                  <p className="text-red-700 font-semibold">
-                    ⚠️ Você já marcou 5 opções. Para escolher uma nova, desmarque uma das anteriores.
-                  </p>
-                </div>
-              )}
-              
-              <div className="mt-2 text-sm text-gray-600">
-                Selecionadas: {currentAnswers.length}/5
-              </div>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              {currentQuestionData.options.map((option, index) => {
-                const isSelected = currentAnswers.includes(index);
-                return (
-                  <button
-                    key={index}
-                    onClick={() => handleOptionClick(index)}
-                    className={`p-4 rounded-xl text-left transition-all duration-200 border-2 flex items-center ${
-                      isSelected
-                        ? 'bg-indigo-50 border-indigo-300 text-indigo-800 shadow-md'
-                        : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="mr-3">
-                      {isSelected ? (
-                        <CheckCircle2 className="w-6 h-6 text-indigo-600" />
-                      ) : (
-                        <Circle className="w-6 h-6 text-gray-400" />
-                      )}
-                    </div>
-                    <span className="text-sm font-medium leading-relaxed">{option}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-indigo-100">
-            <div className="flex justify-between items-center">
-              <button
-                onClick={prevQuestion}
-                disabled={currentQuestion === 0}
-                className={`flex items-center px-6 py-3 rounded-full font-semibold transition-all duration-200 ${
-                  currentQuestion === 0
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 shadow-md hover:shadow-lg'
-                }`}
-              >
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Anterior
-              </button>
-
-              <button
-                onClick={nextQuestion}
-                disabled={!canProceed}
-                className={`flex items-center px-6 py-3 rounded-full font-semibold transition-all duration-200 ${
-                  canProceed
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                {currentQuestion === 3 ? 'Finalizar' : 'Próxima'}
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <QuestionnaireLayout
+        currentQuestion={currentQuestion}
+        totalQuestions={4}
+        title={currentQuestionData.title}
+        subtitle={currentQuestionData.subtitle}
+        options={currentQuestionData.options}
+        selectedOptions={currentAnswers}
+        onOptionClick={handleOptionClick}
+        onNext={nextQuestion}
+        onPrevious={prevQuestion}
+        canProceed={canProceed}
+      />
     );
-  };
+  }, [showWelcome, userInfo, currentQuestion, answers, questions, handleInputChange, iniciarQuestionario, validarNome, validarCPF, formatarCPF, handleOptionClick, nextQuestion, prevQuestion]);
 
   // Componente de Sucesso
-  const SucessoComponent = () => (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-3xl shadow-2xl p-8 border border-indigo-100">
-        <div className="text-center">
-          <div className="mx-auto w-24 h-24 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center mb-6">
-            <CheckCircle2 className="w-12 h-12 text-white" />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">🎉 Propósito Enviado com Sucesso!</h2>
-          
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 mb-8">
-            <h3 className="text-xl font-semibold text-indigo-800 mb-4">Obrigado, {userInfo.nome}!</h3>
-            <p className="text-gray-700 mb-4">
-              Suas respostas foram enviadas com sucesso para análise da equipe de RH.
-            </p>
-            <p className="text-sm text-gray-600">
-              Em breve você receberá um retorno sobre seu perfil e recomendações personalizadas.
-            </p>
-          </div>
-
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-xl mb-8">
-            <p className="text-gray-700 text-center">
-              <strong>Lembre-se:</strong> Este processo é uma ferramenta de autoconhecimento e desenvolvimento profissional.
-            </p>
-          </div>
-
-                                                                                       <div className="flex justify-center">
-               {dadosEnviados ? (
-                 <div className="text-center">
-                   <div className="bg-green-100 border border-green-300 text-green-800 px-6 py-3 rounded-full text-lg font-semibold mb-4">
-                     ✅ Dados já enviados ao RH
-                   </div>
-                   <button
-                     onClick={resetFormulario}
-                     className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                   >
-                     🔄 Fazer Nova Avaliação
-                   </button>
-                 </div>
-               ) : (
-                 <button
-                   onClick={enviarAoRH}
-                   className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                 >
-                   🔥 Enviar ao RH
-                 </button>
-               )}
-             </div>
-        </div>
-      </div>
-    </div>
-  );
+  const SucessoComponent = useCallback(() => (
+    <SuccessScreen
+      userName={userInfo.nome}
+      dadosEnviados={dadosEnviados}
+      onEnviarAoRH={enviarAoRH}
+      onResetFormulario={resetFormulario}
+    />
+  ), [userInfo.nome, dadosEnviados, enviarAoRH, resetFormulario]);
 
         // Funções de Download
     const downloadIndividual = (usuario) => {
@@ -1115,7 +757,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
   };
 
   // Componente Dashboard RH
-  const DashboardComponent = () => {
+  const DashboardComponent = useCallback(() => {
     const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
 
     return (
@@ -1466,7 +1108,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
         </div>
       </div>
     );
-  };
+  }, [usuarios, carregandoUsuarios, downloadConsolidado, exportarBackup, limparTodosDados, downloadIndividual, handleRhLogout]);
 
   // Renderização principal
   if (currentView === 'formulario') {
