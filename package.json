@@ -12,6 +12,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build-render": "cross-env REACT_APP_ENV=render react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.4.14",
+    "cross-env": "^10.0.0",
     "gh-pages": "^6.3.0",
     "postcss": "^8.4.24",
     "react-scripts": "^5.0.1",

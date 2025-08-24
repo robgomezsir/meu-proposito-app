@@ -25,7 +25,7 @@ jobs:
         echo "REACT_APP_ENV=render" >> $GITHUB_ENV
       
     - name: Build for Render
-      run: npm run build
+      run: npm run build-render
       
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
