@@ -107,5 +107,29 @@ http://localhost:3000
 - ✅ **Build**: Script `build-render` funcionando
 - ✅ **GitHub**: Código sincronizado
 - ✅ **Render**: Configuração preparada
+- ✅ **_redirects**: Arquivo configurado para SPA routing
 
-**Próximo passo**: Configurar o serviço no Render Dashboard usando as configurações acima.
+## 🚀 **CONFIGURAÇÃO NO RENDER DASHBOARD**
+
+### **Passo a Passo para Configurar:**
+
+1. **Acesse**: [render.com](https://render.com) e faça login
+2. **Clique em**: "New +" → "Static Site"
+3. **Conecte o GitHub**: Autorize o acesso ao repositório
+4. **Selecione**: `robgomezsir/meu-proposito-app`
+
+### **Configurações Obrigatórias:**
+- **Name**: `meu-proposito-app`
+- **Branch**: `main`
+- **Build Command**: `npm run build-render`
+- **Publish Directory**: `build`
+
+### **Variáveis de Ambiente (Environment Variables):**
+- `NODE_VERSION`: `18`
+- `REACT_APP_ENV`: `render`
+
+### **Configurações Avançadas:**
+- **Auto-Deploy**: `Yes`
+- **Branch**: `main`
+
+**Próximo passo**: O serviço será criado automaticamente e estará disponível em: `https://meu-proposito-app.onrender.com`
