@@ -806,18 +806,18 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   Download Relatório Consolidado
                 </button>
                 
-                <button
-                  onClick={exportarBackup}
-                  disabled={usuarios.length === 0}
-                  className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                    usuarios.length > 0
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  <BarChart3 className="w-5 h-5 mr-2" />
-                  Exportar Backup
-                </button>
+                                 <button
+                   onClick={exportarBackup}
+                   disabled={usuarios.length === 0}
+                   className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                     usuarios.length > 0
+                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1'
+                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                   }`}
+                 >
+                   <BarChart3 className="w-5 h-5 mr-2" />
+                   SAIR
+                 </button>
                 
                 <button
                   onClick={limparTodosDados}
@@ -838,8 +838,8 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                     </svg>
                   </div>
                   <div className="ml-3">
-                                         <p className="text-sm text-blue-700">
-                       <strong>💾 Dados Persistidos:</strong> Todos os registros são salvos na (nuvem)!Use "Exportar Backup" para criar cópias de segurança.                     </p>
+                                                              <p className="text-sm text-blue-700">
+                        <strong>💾 Dados Persistidos:</strong> Todos os registros são salvos na nuvem! Use "SAIR" para sair do sistema.                     </p>
                   </div>
                 </div>
               </div>
