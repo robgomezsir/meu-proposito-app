@@ -7,7 +7,7 @@ import { CheckCircle2, Heart, Sparkles, Shield, ArrowRight, RefreshCw } from 'lu
 const SuccessScreen = ({ 
   userName, 
   dadosEnviados, 
-  onEnviarAoRH, 
+  onExportarBackup, 
   onResetFormulario 
 }) => {
   return (
@@ -80,10 +80,10 @@ const SuccessScreen = ({
                   <Button
                     variant="gradient"
                     size="xl"
-                    onClick={onEnviarAoRH}
+                    onClick={onExportarBackup}
                     className="w-full shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center space-x-2"
                   >
-                    <span>🔥 Enviar ao RH</span>
+                    <span>🔥 Exportar Backup</span>
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                   <p className="text-sm text-gray-500 mt-3">

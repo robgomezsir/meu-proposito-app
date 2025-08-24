@@ -475,7 +475,7 @@ const SistemaProposito = () => {
   };
 
   // Função para enviar dados ao RH (salvar no Firebase)
-  const enviarAoRH = async () => {
+  const salvarDados = async () => {
     try {
       // Calcular score e análise
       const score = calculateScore(answers);
@@ -607,16 +607,16 @@ const SistemaProposito = () => {
     <SuccessScreen
       userName={userInfo.nome}
       dadosEnviados={dadosEnviados}
-      onEnviarAoRH={enviarAoRH}
+      onExportarBackup={salvarDados}
       onResetFormulario={resetFormulario}
     />
-  ), [userInfo.nome, dadosEnviados, enviarAoRH, resetFormulario]);
+  ), [userInfo.nome, dadosEnviados, salvarDados, resetFormulario]);
 
-        // Funções de Download
-    const downloadIndividual = (usuario) => {
-      const respostasArray = converterRespostasParaArray(usuario.respostas);
-     
-     const content = `
+  // Funções de Download
+  const downloadIndividual = (usuario) => {
+    const respostasArray = converterRespostasParaArray(usuario.respostas);
+    
+    const content = `
  RELATÓRIO INDIVIDUAL - ANÁLISE DE PROPÓSITO
  =============================================
  
@@ -835,8 +835,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   </div>
                   <div className="ml-3">
                                          <p className="text-sm text-blue-700">
-                       <strong>💾 Dados Persistidos:</strong> Todos os registros são salvos no Firebase (nuvem) quando o botão "Enviar ao RH" é clicado. Use "Exportar Backup" para criar cópias de segurança e "Testar Firebase" para verificar a conexão.
-                     </p>
+                       <strong>💾 Dados Persistidos:</strong> Todos os registros são salvos na (nuvem)!Use "Exportar Backup" para criar cópias de segurança.                     </p>
                   </div>
                 </div>
               </div>
