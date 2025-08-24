@@ -5,8 +5,12 @@ import { testarConexaoFirebase, limparDadosTeste } from '../firebase/test-connec
 import RegistrationForm from './RegistrationForm';
 import QuestionnaireLayout from './QuestionnaireLayout';
 import SuccessScreen from './SuccessScreen';
+import useRenderOverride from '../config/render-override';
 
 const SistemaProposito = () => {
+  // Aplicar override do Render se necessário
+  useRenderOverride();
+  
   const [currentView, setCurrentView] = useState('formulario'); // formulario, sucesso, dashboard
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([[], [], [], []]);

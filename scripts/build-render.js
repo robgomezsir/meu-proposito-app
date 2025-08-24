@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 console.log('🔧 Preparando build para Render...');
+process.env.REACT_APP_ENV = 'render';
 
 try {
   const packagePath = path.join(__dirname, '..', 'package.json');
