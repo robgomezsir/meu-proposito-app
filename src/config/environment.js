@@ -1,4 +1,6 @@
 // Configuração automática de ambiente
+// Detecta e configura automaticamente GitHub Pages e Render
+
 const getEnvironmentConfig = () => {
   const hostname = window.location.hostname;
   const pathname = window.location.pathname;
@@ -12,26 +14,35 @@ const getEnvironmentConfig = () => {
   // Detectar se está em desenvolvimento local
   const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
   
+  // Detectar se está em produção
+  const isProduction = !isLocal;
+  
   if (isGitHubPages) {
     return {
       environment: 'github-pages',
       basePath: '/meu-proposito-app',
       apiBase: '/meu-proposito-app',
-      isProduction: true
+      isProduction,
+      platform: 'github-pages',
+      assetPrefix: '/meu-proposito-app'
     };
   } else if (isRender) {
     return {
       environment: 'render',
       basePath: '',
       apiBase: '',
-      isProduction: true
+      isProduction,
+      platform: 'render',
+      assetPrefix: ''
     };
   } else if (isLocal) {
     return {
       environment: 'local',
       basePath: '',
       apiBase: 'http://localhost:3000',
-      isProduction: false
+      isProduction: false,
+      platform: 'local',
+      assetPrefix: ''
     };
   } else {
     // Fallback para outros ambientes
@@ -39,7 +50,9 @@ const getEnvironmentConfig = () => {
       environment: 'unknown',
       basePath: '',
       apiBase: '',
-      isProduction: true
+      isProduction: true,
+      platform: 'unknown',
+      assetPrefix: ''
     };
   }
 };
@@ -49,5 +62,17 @@ export const envConfig = getEnvironmentConfig();
 
 // Log da configuração para debug
 console.log('🌍 Configuração de ambiente detectada:', envConfig);
+
+// Função para obter URL de assets
+export const getAssetUrl = (path) => {
+  if (path.startsWith('http')) return path;
+  return `${envConfig.assetPrefix}${path}`;
+};
+
+// Função para obter URL de API
+export const getApiUrl = (endpoint) => {
+  if (endpoint.startsWith('http')) return endpoint;
+  return `${envConfig.apiBase}${endpoint}`;
+};
 
 export default envConfig;
