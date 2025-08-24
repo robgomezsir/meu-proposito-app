@@ -13,10 +13,11 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build-render": "cross-env REACT_APP_ENV=render react-scripts build",
+    "build-render": "node scripts/build-render.js && cross-env REACT_APP_ENV=render react-scripts build",
+    "build-gh": "cross-env REACT_APP_ENV=github-pages react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "predeploy": "npm run build",
+    "predeploy": "npm run build-gh",
     "deploy": "echo 'Deploy via GitHub Actions - execute: git push origin main'",
     "deploy-gh": "gh-pages -d build --repo https://github.com/robgomezsir/meu-proposito-app.git"
   },
@@ -38,5 +39,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "homepage": "https://robgomezsir.github.io/meu-proposito-app"
 }
