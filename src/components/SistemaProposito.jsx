@@ -612,11 +612,11 @@ const SistemaProposito = () => {
     />
   ), [userInfo.nome, dadosEnviados, salvarDados, resetFormulario]);
 
-  // Funções de Download
-  const downloadIndividual = (usuario) => {
-    const respostasArray = converterRespostasParaArray(usuario.respostas);
-    
-    const content = `
+        // Funções de Download
+    const downloadIndividual = (usuario) => {
+      const respostasArray = converterRespostasParaArray(usuario.respostas);
+     
+     const content = `
  RELATÓRIO INDIVIDUAL - ANÁLISE DE PROPÓSITO
  =============================================
  

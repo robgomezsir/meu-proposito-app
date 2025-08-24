@@ -1,8 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { User, FileText, Eye } from 'lucide-react';
 
-const RegistrationForm = () => {
-  const [userInfo, setUserInfo] = useState({ nome: '', cpf: '' });
+const RegistrationForm = ({ 
+  userInfo, 
+  onInputChange, 
+  onSubmit, 
+  onRhAccess,
+  validarNome, 
+  validarCPF, 
+  formatarCPF 
+}) => {
   const [showWelcome, setShowWelcome] = useState(true);
   
   // Refs para controle de foco
@@ -17,7 +24,7 @@ const RegistrationForm = () => {
   }, [showWelcome]);
 
   // Formatação automática do CPF - usando useCallback para evitar re-renders
-  const formatarCPF = useCallback((valor) => {
+  const formatarCPFLocal = useCallback((valor) => {
     // Remove tudo que não é dígito
     const somenteDigitos = valor.replace(/\D/g, '');
     
@@ -33,7 +40,7 @@ const RegistrationForm = () => {
   }, []);
 
   // Validação básica de CPF
-  const validarCPF = useCallback((cpf) => {
+  const validarCPFLocal = useCallback((cpf) => {
     const somenteDigitos = cpf.replace(/\D/g, '');
     
     if (somenteDigitos.length !== 11) return false;
@@ -62,60 +69,54 @@ const RegistrationForm = () => {
   }, []);
 
   // Validação de nome
-  const validarNome = useCallback((nome) => {
+  const validarNomeLocal = useCallback((nome) => {
     const nomeFormatado = nome.trim();
     return nomeFormatado.length >= 2 && /^[a-zA-ZÀ-ÿ\s]+$/.test(nomeFormatado) && nomeFormatado.split(' ').length >= 2;
   }, []);
 
   // Função para atualizar campos do usuário - usando useCallback
-  const handleInputChange = useCallback((e) => {
+  const handleInputChangeLocal = useCallback((e) => {
     const { name, value } = e.target;
     
     if (name === 'cpf') {
       // Aplicar formatação do CPF sem causar re-render desnecessário
-      const cpfFormatado = formatarCPF(value);
-      setUserInfo(prev => ({
-        ...prev,
-        [name]: cpfFormatado
-      }));
+      const cpfFormatado = formatarCPFLocal(value);
+      onInputChange({ target: { name, value: cpfFormatado } });
     } else {
-      setUserInfo(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      onInputChange({ target: { name, value } });
     }
-  }, [formatarCPF]);
+  }, [formatarCPFLocal, onInputChange]);
 
   // Função para iniciar o questionário
-  const iniciarQuestionario = useCallback((e) => {
+  const iniciarQuestionarioLocal = useCallback((e) => {
     e?.preventDefault?.();
     
     // Verificar se os campos estão preenchidos e válidos
-    if (!validarNome(userInfo.nome) || !validarCPF(userInfo.cpf)) {
+    if (!validarNomeLocal(userInfo.nome) || !validarCPFLocal(userInfo.cpf)) {
       alert('Por favor, preencha todos os campos obrigatórios corretamente.');
       return;
     }
     
     console.log('Iniciando questionário com:', userInfo);
-    setShowWelcome(false);
-  }, [userInfo, validarNome, validarCPF]);
+    onSubmit(e);
+  }, [userInfo, validarNomeLocal, validarCPFLocal, onSubmit]);
 
-  const handleRhAccess = useCallback(() => {
+  const handleRhAccessLocal = useCallback(() => {
     console.log('Acessando dashboard RH');
-    // Aqui você implementaria a navegação para o dashboard
-  }, []);
+    onRhAccess();
+  }, [onRhAccess]);
 
   // Verificação em tempo real dos campos
-  const nomeValido = validarNome(userInfo.nome);
-  const cpfValido = validarCPF(userInfo.cpf);
+  const nomeValido = validarNomeLocal(userInfo.nome);
+  const cpfValido = validarCPFLocal(userInfo.cpf);
   const podeEnviar = nomeValido && cpfValido;
 
   // Handler para Enter key
   const handleKeyPress = useCallback((e) => {
     if (e.key === 'Enter' && podeEnviar) {
-      iniciarQuestionario();
+      iniciarQuestionarioLocal();
     }
-  }, [podeEnviar, iniciarQuestionario]);
+  }, [podeEnviar, iniciarQuestionarioLocal]);
 
   if (!showWelcome) {
     return (
@@ -172,7 +173,7 @@ const RegistrationForm = () => {
                   type="text"
                   name="nome"
                   value={userInfo.nome}
-                  onChange={handleInputChange}
+                  onChange={handleInputChangeLocal}
                   className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
                     userInfo.nome && !nomeValido 
                       ? 'border-red-300 bg-red-50' 
@@ -216,7 +217,7 @@ const RegistrationForm = () => {
                   type="text"
                   name="cpf"
                   value={userInfo.cpf}
-                  onChange={handleInputChange}
+                  onChange={handleInputChangeLocal}
                   className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 ${
                     userInfo.cpf && !cpfValido 
                       ? 'border-red-300 bg-red-50' 
@@ -242,17 +243,17 @@ const RegistrationForm = () => {
                   </div>
                 )}
               </div>
-                             {userInfo.cpf && !cpfValido && (
-                 <p className="text-red-600 text-sm mt-1">
-                   CPF inválido. Verifique os números digitados.
-                 </p>
-               )}
+              {userInfo.cpf && !cpfValido && (
+                <p className="text-red-600 text-sm mt-1">
+                  CPF inválido. Verifique os números digitados.
+                </p>
+              )}
             </div>
 
             {/* Botões */}
             <div className="space-y-4 pt-4">
               <button
-                onClick={iniciarQuestionario}
+                onClick={iniciarQuestionarioLocal}
                 disabled={!podeEnviar}
                 className={`w-full py-4 rounded-xl text-lg font-semibold transition-all duration-200 transform ${
                   podeEnviar
@@ -266,7 +267,7 @@ const RegistrationForm = () => {
               <div className="text-center">
                 <button
                   type="button"
-                  onClick={handleRhAccess}
+                  onClick={handleRhAccessLocal}
                   className="inline-flex items-center text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors duration-200"
                 >
                   <Eye className="w-4 h-4 mr-2" />
