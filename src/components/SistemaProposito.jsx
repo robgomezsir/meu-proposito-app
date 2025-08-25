@@ -614,9 +614,11 @@ const SistemaProposito = () => {
   const SucessoComponent = useCallback(() => (
     <SuccessScreen
       userName={userInfo.nome}
+      dadosEnviados={dadosEnviados}
+      onExportarBackup={salvarDados}
       onResetFormulario={resetFormulario}
     />
-  ), [userInfo.nome, resetFormulario]);
+  ), [userInfo.nome, dadosEnviados, salvarDados, resetFormulario]);
 
         // Funções de Download
     const downloadIndividual = (usuario) => {
@@ -1261,92 +1263,92 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
               ) : (
                 // Mostrar análise clínica para questionário tradicional
                 <>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    {/* Perfil Geral */}
-                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                        <User className="w-6 h-6 mr-2 text-indigo-600" />
-                        Perfil Geral
-                      </h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {/* Perfil Geral */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <User className="w-6 h-6 mr-2 text-indigo-600" />
+                    Perfil Geral
+                  </h3>
                       <p className="text-gray-700 leading-relaxed">{usuarioSelecionado.analiseClinica?.perfil || 'Não disponível'}</p>
-                    </div>
+                </div>
 
-                    {/* Competências Identificadas */}
-                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                        <CheckCircle2 className="w-6 h-6 mr-2 text-green-600" />
-                        Competências Identificadas
-                      </h3>
-                      <ul className="space-y-2">
+                {/* Competências Identificadas */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <CheckCircle2 className="w-6 h-6 mr-2 text-green-600" />
+                    Competências Identificadas
+                  </h3>
+                  <ul className="space-y-2">
                         {usuarioSelecionado.analiseClinica?.competencias ? 
                           usuarioSelecionado.analiseClinica.competencias.map((comp, index) => (
-                            <li key={index} className="flex items-center text-gray-700">
-                              <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                              {comp}
-                            </li>
+                      <li key={index} className="flex items-center text-gray-700">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                        {comp}
+                      </li>
                           )) : 
                           <li className="text-gray-500">Não disponível</li>
                         }
-                      </ul>
-                    </div>
-                  </div>
+                  </ul>
+                </div>
+              </div>
 
-                  {/* Análise Comportamental */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                      <h4 className="text-lg font-bold text-gray-800 mb-3">🔄 Adaptabilidade</h4>
+              {/* Análise Comportamental */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                  <h4 className="text-lg font-bold text-gray-800 mb-3">🔄 Adaptabilidade</h4>
                       <p className="text-gray-700 text-sm">{usuarioSelecionado.analiseClinica?.adaptabilidade || 'Não disponível'}</p>
-                    </div>
+                </div>
 
-                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                      <h4 className="text-lg font-bold text-gray-800 mb-3">👥 Liderança</h4>
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                  <h4 className="text-lg font-bold text-gray-800 mb-3">👥 Liderança</h4>
                       <p className="text-gray-700 text-sm">{usuarioSelecionado.analiseClinica?.lideranca || 'Não disponível'}</p>
-                    </div>
+                </div>
 
-                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                      <h4 className="text-lg font-bold text-gray-800 mb-3">🤝 Relacionamento</h4>
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                  <h4 className="text-lg font-bold text-gray-800 mb-3">🤝 Relacionamento</h4>
                       <p className="text-gray-700 text-sm">{usuarioSelecionado.analiseClinica?.relacionamentoInterpessoal || 'Não disponível'}</p>
-                    </div>
-                  </div>
+                </div>
+              </div>
 
-                  {/* Áreas de Desenvolvimento e Recomendações */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                        <TrendingUp className="w-6 h-6 mr-2 text-yellow-600" />
-                        Áreas de Desenvolvimento
-                      </h3>
-                      <ul className="space-y-2">
+              {/* Áreas de Desenvolvimento e Recomendações */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <TrendingUp className="w-6 h-6 mr-2 text-yellow-600" />
+                    Áreas de Desenvolvimento
+                  </h3>
+                  <ul className="space-y-2">
                         {usuarioSelecionado.analiseClinica?.areasDesenvolvimento ? 
                           usuarioSelecionado.analiseClinica.areasDesenvolvimento.map((area, index) => (
-                            <li key={index} className="flex items-center text-gray-700">
-                              <div className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
-                              {area}
-                            </li>
+                      <li key={index} className="flex items-center text-gray-700">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
+                        {area}
+                      </li>
                           )) : 
                           <li className="text-gray-500">Não disponível</li>
                         }
-                      </ul>
-                    </div>
+                  </ul>
+                </div>
 
-                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                        <FileText className="w-6 h-6 mr-2 text-blue-600" />
-                        Recomendações
-                      </h3>
-                      <ul className="space-y-2">
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <FileText className="w-6 h-6 mr-2 text-blue-600" />
+                    Recomendações
+                  </h3>
+                  <ul className="space-y-2">
                         {usuarioSelecionado.analiseClinica?.recomendacoes ? 
                           usuarioSelecionado.analiseClinica.recomendacoes.map((rec, index) => (
-                            <li key={index} className="flex items-center text-gray-700">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                              {rec}
-                            </li>
+                      <li key={index} className="flex items-center text-gray-700">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                        {rec}
+                      </li>
                           )) : 
                           <li className="text-gray-500">Não disponível</li>
                         }
-                      </ul>
-                    </div>
-                  </div>
+                  </ul>
+                </div>
+              </div>
                 </>
               )}
             </div>
