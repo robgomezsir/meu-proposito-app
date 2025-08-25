@@ -1,13 +1,10 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
-import { CheckCircle2, Heart, Sparkles, Shield, ArrowRight, RefreshCw } from 'lucide-react';
+import { CheckCircle2, Heart, Sparkles, Shield, RefreshCw } from 'lucide-react';
 
 const SuccessScreen = ({ 
   userName, 
-  dadosEnviados, 
-  onExportarBackup, 
   onResetFormulario 
 }) => {
   return (
@@ -20,10 +17,10 @@ const SuccessScreen = ({
               <CheckCircle2 className="w-12 h-12 text-white" />
             </div>
             <CardTitle className="text-3xl font-bold mb-2">
-              🎉 Propósito Enviado com Sucesso!
+              🎉 Avaliação Concluída com Sucesso!
             </CardTitle>
             <p className="text-green-100 text-lg">
-              Obrigado por participar da avaliação
+              Obrigado por participar da avaliação de propósito
             </p>
           </CardHeader>
           
@@ -42,6 +39,19 @@ const SuccessScreen = ({
               </p>
             </div>
 
+            {/* Confirmação de envio */}
+            <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6 text-center">
+              <div className="flex items-center justify-center mb-3">
+                <CheckCircle2 className="w-8 h-8 text-green-600 mr-3" />
+                <span className="text-lg font-semibold text-green-800">
+                  ✅ Dados Enviados com Sucesso!
+                </span>
+              </div>
+              <p className="text-green-700 text-sm">
+                Sua avaliação foi salva no sistema e está sendo processada pela equipe de RH.
+              </p>
+            </div>
+
             {/* Lembrete importante */}
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-xl mb-6">
               <div className="flex items-start">
@@ -57,40 +67,17 @@ const SuccessScreen = ({
               </div>
             </div>
 
-            {/* Status dos dados */}
-            <div className="mb-6">
-              {dadosEnviados ? (
-                <div className="text-center space-y-4">
-                  <div className="bg-green-100 border border-green-300 text-green-800 px-6 py-4 rounded-xl text-lg font-semibold flex items-center justify-center">
-                    <Shield className="w-5 h-5 mr-2" />
-                    ✅ Dados já enviados ao RH
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={onResetFormulario}
-                    className="flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
-                  >
-                    <RefreshCw className="w-5 h-5" />
-                    <span>🔄 Fazer Nova Avaliação</span>
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <Button
-                    variant="gradient"
-                    size="xl"
-                    onClick={onExportarBackup}
-                    className="w-full shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center space-x-2"
-                  >
-                    <span>🔥 Exportar Backup</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </Button>
-                  <p className="text-sm text-gray-500 mt-3">
-                    Clique no botão acima para finalizar o processo
-                  </p>
-                </div>
-              )}
+            {/* Botão para nova avaliação */}
+            <div className="text-center mb-6">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={onResetFormulario}
+                className="flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+              >
+                <RefreshCw className="w-5 h-5" />
+                <span>🔄 Fazer Nova Avaliação</span>
+              </Button>
             </div>
 
             {/* Informações adicionais */}

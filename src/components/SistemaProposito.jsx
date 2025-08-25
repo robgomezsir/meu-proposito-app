@@ -20,7 +20,7 @@ const SistemaProposito = () => {
   const [rhEmail, setRhEmail] = useState('');
   const [isRhAuthenticated, setIsRhAuthenticated] = useState(false);
   const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
-  const [dadosEnviados, setDadosEnviados] = useState(false); // Controla se os dados já foram enviados
+
 
   // Refs para controle de foco
   const nomeInputRef = useRef(null);
@@ -304,13 +304,13 @@ const SistemaProposito = () => {
       // Mensagem genérica sem revelar o domínio específico
       alert('Email não autorizado para acesso ao dashboard.');
     }
-  }, [rhEmail]);
+  }, [rhEmail, setIsRhAuthenticated, setCurrentView, caracteristicas]);
 
   const handleRhLogout = useCallback(() => {
     setIsRhAuthenticated(false);
     setRhEmail('');
     setCurrentView('formulario');
-  }, []);
+  }, [setIsRhAuthenticated, setRhEmail, setCurrentView, caracteristicas]);
 
   // Função para atualizar campos do usuário - otimizada para evitar re-renders
   const handleInputChange = useCallback((e) => {
@@ -323,10 +323,10 @@ const SistemaProposito = () => {
         [name]: value
       };
     });
-  }, []);
+  }, [setUserInfo, caracteristicas]);
 
   // Função para iniciar o questionário
-  const iniciarQuestionario = async (e) => {
+  const iniciarQuestionario = useCallback(async (e) => {
     e.preventDefault();
     
     // Verificar se os campos estão preenchidos e válidos
@@ -354,7 +354,7 @@ const SistemaProposito = () => {
     }
     
     setShowWelcome(false);
-  };
+  }, [userInfo.nome, userInfo.cpf, validarNome, validarCPF, verificarCPFExistente, usuarios, setShowWelcome, caracteristicas]);
 
   const handleOptionClick = useCallback((optionIndex) => {
     setAnswers(prev => {
@@ -371,24 +371,68 @@ const SistemaProposito = () => {
       
       return newAnswers;
     });
-  }, [currentQuestion]);
+  }, [currentQuestion, setAnswers, caracteristicas]);
 
-  const nextQuestion = useCallback(() => {
+  const nextQuestion = useCallback(async () => {
     if (answers[currentQuestion].length === 5) {
       if (currentQuestion < 3) {
         setCurrentQuestion(currentQuestion + 1);
       } else {
-        // Apenas ir para a tela de sucesso, sem salvar ainda
-        setCurrentView('sucesso');
+        // Última pergunta - enviar dados automaticamente e ir para agradecimentos
+        try {
+          console.log('🚀 Finalizando questionário - enviando dados automaticamente...');
+          
+          // Calcular score e análise
+          const score = calculateScore(answers);
+          const analiseClinica = getAnaliseClinica(score, answers);
+          
+          // Converter arrays aninhados para objetos planos (compatível com Firestore)
+          const respostasConvertidas = {
+            pergunta1: answers[0] || [],
+            pergunta2: answers[1] || [],
+            pergunta3: answers[2] || [],
+            pergunta4: answers[3] || []
+          };
+          
+          // Preparar dados do usuário
+          const novoUsuario = {
+            nome: userInfo.nome,
+            cpf: userInfo.cpf,
+            respostas: respostasConvertidas,
+            score: score,
+            status: getStatus(score),
+            analiseClinica: analiseClinica,
+            dataRealizacao: new Date().toLocaleDateString('pt-BR')
+          };
+          
+          console.log('📝 Dados preparados para envio:', novoUsuario);
+          
+          // Salvar no Firebase
+          console.log('🔥 Salvando no Firebase...');
+          const usuarioSalvo = await adicionarUsuario(novoUsuario);
+          console.log('✅ Usuário salvo com sucesso:', usuarioSalvo);
+          
+
+          
+          // Atualizar lista de usuários localmente
+          setUsuarios(prev => [...prev, { ...novoUsuario, id: usuarioSalvo.id }]);
+          
+          // Ir para tela de agradecimentos
+          setCurrentView('sucesso');
+          
+        } catch (error) {
+          console.error('❌ Erro ao enviar dados automaticamente:', error);
+          alert(`❌ Erro ao finalizar questionário:\n\n${error.message}\n\nTente novamente.`);
+        }
       }
     }
-  }, [currentQuestion, answers]);
+  }, [currentQuestion, answers, userInfo.nome, userInfo.cpf, calculateScore, getAnaliseClinica, getStatus, adicionarUsuario, setUsuarios, setCurrentView, caracteristicas, valores]);
 
   const prevQuestion = useCallback(() => {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
     }
-  }, [currentQuestion]);
+  }, [currentQuestion, setCurrentQuestion, caracteristicas]);
 
   const resetFormulario = useCallback(() => {
     setCurrentQuestion(0);
@@ -396,11 +440,10 @@ const SistemaProposito = () => {
     setUserInfo({ nome: '', cpf: '' });
     setCurrentView('formulario');
     setShowWelcome(true);
-    setDadosEnviados(false); // Resetar estado de dados enviados
-  }, []);
+  }, [setCurrentQuestion, setAnswers, setUserInfo, setCurrentView, setShowWelcome, caracteristicas]);
 
   // Função para limpar todos os dados (para RH)
-  const limparTodosDados = async () => {
+  const limparTodosDados = useCallback(async () => {
     if (window.confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.')) {
       try {
         // Log detalhado da ação de exclusão
@@ -450,10 +493,10 @@ const SistemaProposito = () => {
         alert(`❌ Erro ao limpar dados:\n\n${error.message}\n\nTente novamente.`);
       }
     }
-  };
+  }, [rhEmail, usuarios.length, deletarTodosUsuarios, setUsuarios, caracteristicas]);
 
   // Função para testar conexão Firebase
-  const testarFirebase = async () => {
+  const testarFirebase = useCallback(async () => {
     try {
       const resultado = await testarConexaoFirebase();
       if (resultado.sucesso) {
@@ -465,10 +508,10 @@ const SistemaProposito = () => {
       console.error('Erro ao testar Firebase:', error);
       alert(`❌ Erro ao executar teste:\n\n${error.message}`);
     }
-  };
+  }, [caracteristicas]);
 
   // Função para limpar dados de teste
-  const limparTeste = async () => {
+  const limparTeste = useCallback(async () => {
     try {
       const resultado = await limparDadosTeste();
       if (resultado.sucesso) {
@@ -480,65 +523,12 @@ const SistemaProposito = () => {
       console.error('Erro ao limpar dados de teste:', error);
       alert(`❌ Erro ao executar limpeza:\n\n${error.message}`);
     }
-  };
+  }, [caracteristicas]);
 
-  // Função para enviar dados ao RH (salvar no Firebase)
-  const salvarDados = async () => {
-    try {
-      // Calcular score e análise
-      const score = calculateScore(answers);
-      const analiseClinica = getAnaliseClinica(score, answers);
-      
-      // Converter arrays aninhados para objetos planos (compatível com Firestore)
-      const respostasConvertidas = {
-        pergunta1: answers[0] || [],
-        pergunta2: answers[1] || [],
-        pergunta3: answers[2] || [],
-        pergunta4: answers[3] || []
-      };
-      
-      // Preparar dados do usuário
-      const novoUsuario = {
-        nome: userInfo.nome,
-        cpf: userInfo.cpf,
-        respostas: respostasConvertidas,
-        score: score,
-        status: getStatus(score),
-        analiseClinica: analiseClinica,
-        dataRealizacao: new Date().toLocaleDateString('pt-BR')
-      };
-      
-      console.log('📝 Dados preparados para envio:', novoUsuario);
-      
-      // Salvar no Firebase
-      console.log('🔥 Salvando no Firebase...');
-      const usuarioSalvo = await adicionarUsuario(novoUsuario);
-      console.log('✅ Usuário salvo com sucesso:', usuarioSalvo);
-      
-      // Marcar dados como enviados
-      setDadosEnviados(true);
-      
-      // Mostrar mensagem de sucesso simples
-      alert(`✅ Dados enviados com sucesso ao RH!\n\nObrigado por participar da avaliação.`);
-      
-      // Recarregar dados do Firebase para garantir sincronização (sem redirecionar)
-      setTimeout(async () => {
-        try {
-          const usuariosAtualizados = await buscarUsuarios();
-          setUsuarios(usuariosAtualizados);
-        } catch (error) {
-          console.error('Erro ao recarregar dados:', error);
-        }
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Erro ao enviar dados ao RH:', error);
-      alert(`❌ Erro ao enviar dados:\n\n${error.message}\n\nTente novamente.`);
-    }
-  };
+
 
   // Função auxiliar para converter respostas do novo formato para array
-  const converterRespostasParaArray = (respostas) => {
+  const converterRespostasParaArray = useCallback((respostas) => {
     if (Array.isArray(respostas)) {
       // Formato antigo (array de arrays) - manter compatibilidade
       return respostas;
@@ -551,10 +541,10 @@ const SistemaProposito = () => {
         respostas.pergunta4 || []
       ];
     }
-  };
+  }, [caracteristicas]);
 
   // Função para exportar dados como backup
-  const exportarBackup = () => {
+  const exportarBackup = useCallback(() => {
     const backup = {
       usuarios: usuarios,
       dataExportacao: new Date().toISOString(),
@@ -570,12 +560,12 @@ const SistemaProposito = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  };
+  }, [usuarios, caracteristicas]);
 
 
 
   // Componente do Formulário
-  const renderFormulario = () => {
+  const renderFormulario = useCallback(() => {
     if (showWelcome) {
       return (
         <RegistrationForm
@@ -608,20 +598,18 @@ const SistemaProposito = () => {
         canProceed={canProceed}
       />
     );
-  };
+  }, [showWelcome, userInfo, handleInputChange, iniciarQuestionario, setCurrentView, validarNome, validarCPF, formatarCPF, questions, currentQuestion, answers, handleOptionClick, nextQuestion, prevQuestion, caracteristicas]);
 
   // Componente de Sucesso
   const SucessoComponent = useCallback(() => (
     <SuccessScreen
       userName={userInfo.nome}
-      dadosEnviados={dadosEnviados}
-      onExportarBackup={salvarDados}
       onResetFormulario={resetFormulario}
     />
-  ), [userInfo.nome, dadosEnviados, salvarDados, resetFormulario]);
+  ), [userInfo.nome, resetFormulario, caracteristicas]);
 
         // Funções de Download
-    const downloadIndividual = (usuario) => {
+    const downloadIndividual = useCallback((usuario) => {
       const respostasArray = converterRespostasParaArray(usuario.respostas);
      
      const content = `
@@ -671,6 +659,12 @@ const SistemaProposito = () => {
  Pergunta 3 - Frases importantes:
  ${respostasArray[2].map(index => `• ${frasesVida[index]}`).join('\n')}
  
+ Pergunta 2 - Como você se vê:
+ ${respostasArray[1].map(index => `• ${caracteristicas[index]}`).join('\n')}
+ 
+ Pergunta 3 - Frases importantes:
+ ${respostasArray[2].map(index => `• ${frasesVida[index]}`).join('\n')}
+ 
  Pergunta 4 - Valores importantes:
  ${respostasArray[3].map(index => `• ${valores[index]}`).join('\n')}
  
@@ -688,9 +682,9 @@ const SistemaProposito = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  };
+  }, [converterRespostasParaArray, caracteristicas, frasesVida, valores]);
 
-  const downloadConsolidado = () => {
+  const downloadConsolidado = useCallback(() => {
     if (usuarios.length === 0) {
       alert('Não há dados para exportar.');
       return;
@@ -762,7 +756,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  };
+  }, [usuarios, caracteristicas]);
 
   // Componente Dashboard RH
   const DashboardComponent = useCallback(() => {
@@ -1115,7 +1109,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
         </div>
       </div>
     );
-  }, [usuarios, carregandoUsuarios, downloadConsolidado, exportarBackup, limparTodosDados, downloadIndividual, handleRhLogout]);
+  }, [usuarios, carregandoUsuarios, downloadConsolidado, exportarBackup, limparTodosDados, downloadIndividual, handleRhLogout, caracteristicas, frasesVida, valores, setCurrentView, setUsuarioSelecionado]);
 
   // Renderização principal
   if (currentView === 'formulario') {
