@@ -3,7 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
-  # Permite execução manual do workflow
   workflow_dispatch:
 
 permissions:
@@ -27,29 +26,12 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-        cache: 'npm'  # Adiciona cache para melhor performance
         
     - name: Install dependencies
       run: npm ci
       
-    - name: Build for GitHub Pages
-      run: |
-        # Configurar variáveis de ambiente
-        export REACT_APP_ENV=github-pages
-        export REACT_APP_PUBLIC_URL=/meu-proposito-app
-        export REACT_APP_ASSET_PREFIX=/meu-proposito-app
-        export REACT_APP_USE_ABSOLUTE_PATHS=true
-        
-        # Build
-        npm run build
-        
-        # Verificar se o build foi criado corretamente
-        ls -la build/
-      env:
-        REACT_APP_ENV: github-pages
-        REACT_APP_PUBLIC_URL: /meu-proposito-app
-        REACT_APP_ASSET_PREFIX: /meu-proposito-app
-        REACT_APP_USE_ABSOLUTE_PATHS: true
+    - name: Build
+      run: npm run build
         
     - name: Setup Pages
       uses: actions/configure-pages@v3

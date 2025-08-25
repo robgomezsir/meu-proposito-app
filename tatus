@@ -1,0 +1,10 @@
+[33ma4ca017[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m fix: update GitHub Actions to stable versions
+[33md096810[m[33m ([m[1;31morigin/main[m[33m)[m feat: implementar melhorias no questionário integrado - Salvamento automático ao finalizar - Dashboard unificado para ambos os tipos de questionário - Tela de agradecimentos sem redirecionamento - Estatísticas separadas por tipo de questionário - Relatórios adaptados para questionários integrados - Suporte completo para dados do Firebase
+[33m3c958b5[m feat: adicionar configuracoes do VS Code para melhorar suporte ao GitHub Actions
+[33md54c433[m fix: atualizar versoes das actions do GitHub Actions para versoes mais estaveis
+[33m81a5334[m fix: remover arquivos de build do controle de versao e limpar arquivos duplicados
+[33m8317ce6[m fix: corrigir formato das actions do GitHub Actions com versoes especificas
+[33m5c14f62[m Corrige todas as falhas: remove arquivos duplicados, corrige versões e limpa configurações
+[33m60a54c0[m Corrige todos os problemas: workflows, configuração estática e build
+[33mc451ffb[m Corrige workflow GitHub Actions - remove dependência do cross-env
+[33md87bf27[m Corrige workflow GitHub Actions para deploy automático
