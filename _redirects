@@ -1,1 +1,14 @@
+# Configuração para SPA (Single Page Application)
+# Funciona tanto no Render quanto no GitHub Pages
+
+# Todas as rotas devem redirecionar para index.html
 /*    /index.html   200
+
+# Configurações específicas para APIs (se necessário)
+/api/*    /index.html   200
+
+# Configurações para arquivos estáticos
+/static/*    /static/*   200
+
+# Configurações específicas para GitHub Pages
+/meu-proposito-app/*    /meu-proposito-app/index.html   200

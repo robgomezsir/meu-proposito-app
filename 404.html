@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Página não encontrada</title>
+  <script>
+    // Detectar ambiente e redirecionar adequadamente
+    const hostname = window.location.hostname;
+    const pathname = window.location.pathname;
+    
+    // Se estiver no GitHub Pages
+    if (hostname.includes('github.io')) {
+      // Redirecionar para a aplicação principal
+      if (!pathname.startsWith('/meu-proposito-app/')) {
+        window.location.href = '/meu-proposito-app/';
+      } else {
+        // Se estiver no caminho correto mas a rota não existe, redirecionar para index
+        window.location.href = '/meu-proposito-app/';
+      }
+    } 
+    // Se estiver no Render
+    else if (hostname.includes('onrender.com')) {
+      // Redirecionar para a raiz
+      window.location.href = '/';
+    } 
+    // Para outros ambientes (local, etc.)
+    else {
+      window.location.href = '/';
+    }
+  </script>
+</head>
+<body>
+  <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+    <h1>🔄 Redirecionando...</h1>
+    <p>Se você não for redirecionado automaticamente, <a href="javascript:location.reload()">clique aqui</a>.</p>
+  </div>
+</body>
+</html>
