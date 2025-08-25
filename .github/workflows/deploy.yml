@@ -9,7 +9,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  actions: read  # ✅ Necessário para usar artifacts
+  actions: read  # ✅ O que seria Necessário para usar artifacts
 
 concurrency:
   group: "pages"
