@@ -5,8 +5,12 @@ import { testarConexaoFirebase, limparDadosTeste } from '../firebase/test-connec
 import RegistrationForm from './RegistrationForm';
 import QuestionnaireLayout from './QuestionnaireLayout';
 import SuccessScreen from './SuccessScreen';
+import useRenderOverride from '../config/render-override';
 
 const SistemaProposito = () => {
+  // Aplicar override do Render se necessário
+  useRenderOverride();
+  
   const [currentView, setCurrentView] = useState('formulario'); // formulario, sucesso, dashboard
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([[], [], [], []]);
@@ -16,7 +20,7 @@ const SistemaProposito = () => {
   const [rhEmail, setRhEmail] = useState('');
   const [isRhAuthenticated, setIsRhAuthenticated] = useState(false);
   const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
-
+  const [dadosEnviados, setDadosEnviados] = useState(false); // Controla se os dados já foram enviados
 
   // Refs para controle de foco
   const nomeInputRef = useRef(null);
@@ -300,13 +304,13 @@ const SistemaProposito = () => {
       // Mensagem genérica sem revelar o domínio específico
       alert('Email não autorizado para acesso ao dashboard.');
     }
-  }, [rhEmail, setIsRhAuthenticated, setCurrentView, caracteristicas]);
+  }, [rhEmail]);
 
   const handleRhLogout = useCallback(() => {
     setIsRhAuthenticated(false);
     setRhEmail('');
     setCurrentView('formulario');
-  }, [setIsRhAuthenticated, setRhEmail, setCurrentView, caracteristicas]);
+  }, []);
 
   // Função para atualizar campos do usuário - otimizada para evitar re-renders
   const handleInputChange = useCallback((e) => {
@@ -319,10 +323,10 @@ const SistemaProposito = () => {
         [name]: value
       };
     });
-  }, [setUserInfo, caracteristicas]);
+  }, []);
 
   // Função para iniciar o questionário
-  const iniciarQuestionario = useCallback(async (e) => {
+  const iniciarQuestionario = async (e) => {
     e.preventDefault();
     
     // Verificar se os campos estão preenchidos e válidos
@@ -350,7 +354,7 @@ const SistemaProposito = () => {
     }
     
     setShowWelcome(false);
-  }, [userInfo.nome, userInfo.cpf, validarNome, validarCPF, verificarCPFExistente, usuarios, setShowWelcome, caracteristicas]);
+  };
 
   const handleOptionClick = useCallback((optionIndex) => {
     setAnswers(prev => {
@@ -367,68 +371,24 @@ const SistemaProposito = () => {
       
       return newAnswers;
     });
-  }, [currentQuestion, setAnswers, caracteristicas]);
+  }, [currentQuestion]);
 
-  const nextQuestion = useCallback(async () => {
+  const nextQuestion = useCallback(() => {
     if (answers[currentQuestion].length === 5) {
       if (currentQuestion < 3) {
         setCurrentQuestion(currentQuestion + 1);
       } else {
-        // Última pergunta - enviar dados automaticamente e ir para agradecimentos
-        try {
-          console.log('🚀 Finalizando questionário - enviando dados automaticamente...');
-          
-          // Calcular score e análise
-          const score = calculateScore(answers);
-          const analiseClinica = getAnaliseClinica(score, answers);
-          
-          // Converter arrays aninhados para objetos planos (compatível com Firestore)
-          const respostasConvertidas = {
-            pergunta1: answers[0] || [],
-            pergunta2: answers[1] || [],
-            pergunta3: answers[2] || [],
-            pergunta4: answers[3] || []
-          };
-          
-          // Preparar dados do usuário
-          const novoUsuario = {
-            nome: userInfo.nome,
-            cpf: userInfo.cpf,
-            respostas: respostasConvertidas,
-            score: score,
-            status: getStatus(score),
-            analiseClinica: analiseClinica,
-            dataRealizacao: new Date().toLocaleDateString('pt-BR')
-          };
-          
-          console.log('📝 Dados preparados para envio:', novoUsuario);
-          
-          // Salvar no Firebase
-          console.log('🔥 Salvando no Firebase...');
-          const usuarioSalvo = await adicionarUsuario(novoUsuario);
-          console.log('✅ Usuário salvo com sucesso:', usuarioSalvo);
-          
-
-          
-          // Atualizar lista de usuários localmente
-          setUsuarios(prev => [...prev, { ...novoUsuario, id: usuarioSalvo.id }]);
-          
-          // Ir para tela de agradecimentos
-          setCurrentView('sucesso');
-          
-        } catch (error) {
-          console.error('❌ Erro ao enviar dados automaticamente:', error);
-          alert(`❌ Erro ao finalizar questionário:\n\n${error.message}\n\nTente novamente.`);
-        }
+        // Apenas ir para a tela de sucesso, sem salvar ainda
+        setCurrentView('sucesso');
       }
     }
-  }, [currentQuestion, answers, userInfo.nome, userInfo.cpf, calculateScore, getAnaliseClinica, getStatus, adicionarUsuario, setUsuarios, setCurrentView, caracteristicas, valores]);
+  }, [currentQuestion, answers]);
 
   const prevQuestion = useCallback(() => {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
     }
-  }, [currentQuestion, setCurrentQuestion, caracteristicas]);
+  }, [currentQuestion]);
 
   const resetFormulario = useCallback(() => {
     setCurrentQuestion(0);
@@ -436,10 +396,11 @@ const SistemaProposito = () => {
     setUserInfo({ nome: '', cpf: '' });
     setCurrentView('formulario');
     setShowWelcome(true);
-  }, [setCurrentQuestion, setAnswers, setUserInfo, setCurrentView, setShowWelcome, caracteristicas]);
+    setDadosEnviados(false); // Resetar estado de dados enviados
+  }, []);
 
   // Função para limpar todos os dados (para RH)
-  const limparTodosDados = useCallback(async () => {
+  const limparTodosDados = async () => {
     if (window.confirm('Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.')) {
       try {
         // Log detalhado da ação de exclusão
@@ -489,10 +450,10 @@ const SistemaProposito = () => {
         alert(`❌ Erro ao limpar dados:\n\n${error.message}\n\nTente novamente.`);
       }
     }
-  }, [rhEmail, usuarios.length, deletarTodosUsuarios, setUsuarios, caracteristicas]);
+  };
 
   // Função para testar conexão Firebase
-  const testarFirebase = useCallback(async () => {
+  const testarFirebase = async () => {
     try {
       const resultado = await testarConexaoFirebase();
       if (resultado.sucesso) {
@@ -504,10 +465,10 @@ const SistemaProposito = () => {
       console.error('Erro ao testar Firebase:', error);
       alert(`❌ Erro ao executar teste:\n\n${error.message}`);
     }
-  }, [caracteristicas]);
+  };
 
   // Função para limpar dados de teste
-  const limparTeste = useCallback(async () => {
+  const limparTeste = async () => {
     try {
       const resultado = await limparDadosTeste();
       if (resultado.sucesso) {
@@ -519,12 +480,65 @@ const SistemaProposito = () => {
       console.error('Erro ao limpar dados de teste:', error);
       alert(`❌ Erro ao executar limpeza:\n\n${error.message}`);
     }
-  }, [caracteristicas]);
+  };
 
-
+  // Função para enviar dados ao RH (salvar no Firebase)
+  const salvarDados = async () => {
+    try {
+      // Calcular score e análise
+      const score = calculateScore(answers);
+      const analiseClinica = getAnaliseClinica(score, answers);
+      
+      // Converter arrays aninhados para objetos planos (compatível com Firestore)
+      const respostasConvertidas = {
+        pergunta1: answers[0] || [],
+        pergunta2: answers[1] || [],
+        pergunta3: answers[2] || [],
+        pergunta4: answers[3] || []
+      };
+      
+      // Preparar dados do usuário
+      const novoUsuario = {
+        nome: userInfo.nome,
+        cpf: userInfo.cpf,
+        respostas: respostasConvertidas,
+        score: score,
+        status: getStatus(score),
+        analiseClinica: analiseClinica,
+        dataRealizacao: new Date().toLocaleDateString('pt-BR')
+      };
+      
+      console.log('📝 Dados preparados para envio:', novoUsuario);
+      
+      // Salvar no Firebase
+      console.log('🔥 Salvando no Firebase...');
+      const usuarioSalvo = await adicionarUsuario(novoUsuario);
+      console.log('✅ Usuário salvo com sucesso:', usuarioSalvo);
+      
+      // Marcar dados como enviados
+      setDadosEnviados(true);
+      
+      // Mostrar mensagem de sucesso simples
+      alert(`✅ Dados enviados com sucesso ao RH!\n\nObrigado por participar da avaliação.`);
+      
+      // Recarregar dados do Firebase para garantir sincronização (sem redirecionar)
+      setTimeout(async () => {
+        try {
+          const usuariosAtualizados = await buscarUsuarios();
+          setUsuarios(usuariosAtualizados);
+        } catch (error) {
+          console.error('Erro ao recarregar dados:', error);
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Erro ao enviar dados ao RH:', error);
+      alert(`❌ Erro ao enviar dados:\n\n${error.message}\n\nTente novamente.`);
+    }
+  };
 
   // Função auxiliar para converter respostas do novo formato para array
-  const converterRespostasParaArray = useCallback((respostas) => {
+  const converterRespostasParaArray = (respostas) => {
     if (Array.isArray(respostas)) {
       // Formato antigo (array de arrays) - manter compatibilidade
       return respostas;
@@ -537,10 +551,10 @@ const SistemaProposito = () => {
         respostas.pergunta4 || []
       ];
     }
-  }, [caracteristicas]);
+  };
 
   // Função para exportar dados como backup
-  const exportarBackup = useCallback(() => {
+  const exportarBackup = () => {
     const backup = {
       usuarios: usuarios,
       dataExportacao: new Date().toISOString(),
@@ -556,12 +570,12 @@ const SistemaProposito = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [usuarios, caracteristicas]);
+  };
 
 
 
   // Componente do Formulário
-  const renderFormulario = useCallback(() => {
+  const renderFormulario = () => {
     if (showWelcome) {
       return (
         <RegistrationForm
@@ -594,75 +608,141 @@ const SistemaProposito = () => {
         canProceed={canProceed}
       />
     );
-  }, [showWelcome, userInfo, handleInputChange, iniciarQuestionario, setCurrentView, validarNome, validarCPF, formatarCPF, questions, currentQuestion, answers, handleOptionClick, nextQuestion, prevQuestion, caracteristicas]);
+  };
 
   // Componente de Sucesso
   const SucessoComponent = useCallback(() => (
     <SuccessScreen
       userName={userInfo.nome}
+      dadosEnviados={dadosEnviados}
+      onExportarBackup={salvarDados}
       onResetFormulario={resetFormulario}
     />
-  ), [userInfo.nome, resetFormulario, caracteristicas]);
+  ), [userInfo.nome, dadosEnviados, salvarDados, resetFormulario]);
 
         // Funções de Download
-    const downloadIndividual = useCallback((usuario) => {
+    const downloadIndividual = (usuario) => {
       const respostasArray = converterRespostasParaArray(usuario.respostas);
      
-     const content = `
+     let content = `
  RELATÓRIO INDIVIDUAL - ANÁLISE DE PROPÓSITO
  =============================================
  
  DADOS PESSOAIS:
  Nome: ${usuario.nome}
- CPF: ${usuario.cpf}
- Data da Avaliação: ${usuario.dataRealizacao}
+ ${usuario.cpf ? `CPF: ${usuario.cpf}` : 'Email: ' + (usuario.email || 'Não informado')}
+ Data da Avaliação: ${usuario.dataRealizacao || usuario.createdAt ? 
+   (usuario.dataRealizacao || new Date(usuario.createdAt).toLocaleDateString('pt-BR')) : 
+   'Data não disponível'
+ }
+ ${usuario.vaga ? `Vaga: ${usuario.vaga}` : ''}
+ ${usuario.empresa ? `Empresa: ${usuario.empresa}` : ''}
  
  RESULTADO GERAL:
- Score Final: ${usuario.score} pontos
- Status: ${usuario.status}
+ Score Final: ${usuario.score || 'N/A'} pontos
+ Status: ${usuario.status || usuario.categoria || 'Status não disponível'}
+ ${usuario.percentual ? `Percentual: ${usuario.percentual}%` : ''}
+ `;
+
+     // Se for questionário integrado, mostrar respostas detalhadas
+     if (usuario.tipo === 'questionario_integrado') {
+       content += `
+ 
+ DETALHAMENTO DAS RESPOSTAS:
+ 
+ Pergunta 1 - Propósito e Valores:
+ ${respostasArray[0] && respostasArray[0].length > 0 ? 
+   respostasArray[0].map((resposta, index) => `${index + 1}. ${resposta}`).join('\n') : 
+   'Não respondido'
+ }
+ 
+ Pergunta 2 - Habilidades e Competências:
+ ${respostasArray[1] && respostasArray[1].length > 0 ? 
+   respostasArray[1].map((resposta, index) => `${index + 1}. ${resposta}`).join('\n') : 
+   'Não respondido'
+ }
+ 
+ Pergunta 3 - Experiência e Crescimento:
+ ${respostasArray[2] && respostasArray[2].length > 0 ? 
+   respostasArray[2].map((resposta, index) => `${index + 1}. ${resposta}`).join('\n') : 
+   'Não respondido'
+ }
+ 
+ Pergunta 4 - Cultura e Ambiente:
+ ${respostasArray[3] && respostasArray[3].length > 0 ? 
+   respostasArray[3].map((resposta, index) => `${index + 1}. ${resposta}`).join('\n') : 
+   'Não respondido'
+ }
+ 
+ ${usuario.tempoResposta ? `Tempo de Resposta: ${usuario.tempoResposta} segundos` : ''}
+ `;
+     } else {
+       // Se for questionário tradicional, mostrar análise clínica
+       if (usuario.analiseClinica) {
+         content += `
  
  PERFIL GERAL:
- ${usuario.analiseClinica.perfil}
+ ${usuario.analiseClinica.perfil || 'Não disponível'}
  
  COMPETÊNCIAS IDENTIFICADAS:
- ${usuario.analiseClinica.competencias.map(comp => `• ${comp}`).join('\n')}
+ ${usuario.analiseClinica.competencias ? 
+   usuario.analiseClinica.competencias.map(comp => `• ${comp}`).join('\n') : 
+   'Não disponível'
+ }
  
  ANÁLISE COMPORTAMENTAL:
  
  Adaptabilidade:
- ${usuario.analiseClinica.adaptabilidade}
+ ${usuario.analiseClinica.adaptabilidade || 'Não disponível'}
  
  Liderança:
- ${usuario.analiseClinica.lideranca}
+ ${usuario.analiseClinica.lideranca || 'Não disponível'}
  
  Relacionamento Interpessoal:
- ${usuario.analiseClinica.relacionamentoInterpessoal}
+ ${usuario.analiseClinica.relacionamentoInterpessoal || 'Não disponível'}
  
  ÁREAS DE DESENVOLVIMENTO:
- ${usuario.analiseClinica.areasDesenvolvimento.map(area => `• ${area}`).join('\n')}
+ ${usuario.analiseClinica.areasDesenvolvimento ? 
+   usuario.analiseClinica.areasDesenvolvimento.map(area => `• ${area}`).join('\n') : 
+   'Não disponível'
+ }
  
  RECOMENDAÇÕES:
- ${usuario.analiseClinica.recomendacoes.map(rec => `• ${rec}`).join('\n')}
+ ${usuario.analiseClinica.recomendacoes ? 
+   usuario.analiseClinica.recomendacoes.map(rec => `• ${rec}`).join('\n') : 
+   'Não disponível'
+ }
  
  DETALHAMENTO DAS RESPOSTAS:
  
  Pergunta 1 - Como as pessoas te veem:
- ${respostasArray[0].map(index => `• ${caracteristicas[index]}`).join('\n')}
+ ${respostasArray[0] && respostasArray[0].length > 0 ? 
+   respostasArray[0].map(index => `• ${caracteristicas[index]}`).join('\n') : 
+   'Não respondido'
+ }
  
  Pergunta 2 - Como você se vê:
- ${respostasArray[1].map(index => `• ${caracteristicas[index]}`).join('\n')}
+ ${respostasArray[1] && respostasArray[1].length > 0 ? 
+   respostasArray[1].map(index => `• ${caracteristicas[index]}`).join('\n') : 
+   'Não respondido'
+ }
  
  Pergunta 3 - Frases importantes:
- ${respostasArray[2].map(index => `• ${frasesVida[index]}`).join('\n')}
- 
- Pergunta 2 - Como você se vê:
- ${respostasArray[1].map(index => `• ${caracteristicas[index]}`).join('\n')}
- 
- Pergunta 3 - Frases importantes:
- ${respostasArray[2].map(index => `• ${frasesVida[index]}`).join('\n')}
+ ${respostasArray[2] && respostasArray[2].length > 0 ? 
+   respostasArray[2].map(index => `• ${frasesVida[index]}`).join('\n') : 
+   'Não respondido'
+ }
  
  Pergunta 4 - Valores importantes:
- ${respostasArray[3].map(index => `• ${valores[index]}`).join('\n')}
+ ${respostasArray[3] && respostasArray[3].length > 0 ? 
+   respostasArray[3].map(index => `• ${valores[index]}`).join('\n') : 
+   'Não respondido'
+ }
+ `;
+       }
+     }
+
+     content += `
  
  ==============================================
  Relatório gerado automaticamente pelo Sistema de Análise de Propósito
@@ -672,27 +752,52 @@ const SistemaProposito = () => {
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = `Relatorio_${usuario.nome.replace(/\s+/g, '_')}_${usuario.cpf}.txt`;
+    const fileName = usuario.cpf ? 
+      `Relatorio_${usuario.nome.replace(/\s+/g, '_')}_${usuario.cpf}.txt` :
+      `Relatorio_${usuario.nome.replace(/\s+/g, '_')}_${usuario.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'integrado'}.txt`;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [converterRespostasParaArray, caracteristicas, frasesVida, valores]);
+  };
 
-  const downloadConsolidado = useCallback(() => {
+  const downloadConsolidado = () => {
     if (usuarios.length === 0) {
       alert('Não há dados para exportar.');
       return;
     }
 
     // Dados para CSV
-    const csvHeader = 'Nome,CPF,Data Avaliacao,Score,Status,Competencias Principais,Areas Desenvolvimento\n';
+    const csvHeader = 'Nome,CPF/Email,Data Avaliacao,Score,Status/Categoria,Tipo Questionario,Competencias/Respostas\n';
     const csvData = usuarios.map(usuario => {
-      const competencias = usuario.analiseClinica.competencias.slice(0, 3).join('; ');
-      const areas = usuario.analiseClinica.areasDesenvolvimento.slice(0, 3).join('; ');
-      return `"${usuario.nome}","${usuario.cpf}","${usuario.dataRealizacao}",${usuario.score},"${usuario.status}","${competencias}","${areas}"`;
+      const identificacao = usuario.cpf || usuario.email || 'Não informado';
+      const dataAvaliacao = usuario.dataRealizacao || 
+        (usuario.createdAt ? new Date(usuario.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível');
+      const statusOuCategoria = usuario.status || usuario.categoria || 'Status não disponível';
+      const tipoQuestionario = usuario.tipo === 'questionario_integrado' ? 'Integrado' : 'Tradicional';
+      
+      let competenciasOuRespostas = '';
+      if (usuario.tipo === 'questionario_integrado') {
+        competenciasOuRespostas = usuario.respostas ? 
+          usuario.respostas.flat().slice(0, 3).join('; ') : 'Não disponível';
+      } else {
+        competenciasOuRespostas = usuario.analiseClinica?.competencias ? 
+          usuario.analiseClinica.competencias.slice(0, 3).join('; ') : 'Não disponível';
+      }
+      
+      return `"${usuario.nome}","${identificacao}","${dataAvaliacao}",${usuario.score || 'N/A'},"${statusOuCategoria}","${tipoQuestionario}","${competenciasOuRespostas}"`;
     }).join('\n');
+
+    // Calcular estatísticas por tipo de questionário
+    const questionariosTradicionais = usuarios.filter(u => u.tipo !== 'questionario_integrado');
+    const questionariosIntegrados = usuarios.filter(u => u.tipo === 'questionario_integrado');
+    
+    const scoreMedioTradicional = questionariosTradicionais.length > 0 ? 
+      Math.round(questionariosTradicionais.reduce((acc, u) => acc + (u.score || 0), 0) / questionariosTradicionais.length) : 0;
+    
+    const scoreMedioIntegrado = questionariosIntegrados.length > 0 ? 
+      Math.round(questionariosIntegrados.reduce((acc, u) => acc + (u.score || 0), 0) / questionariosIntegrados.length) : 0;
 
     // Relatório detalhado
     const relatorioCompleto = `
@@ -701,40 +806,73 @@ RELATÓRIO CONSOLIDADO - ANÁLISE DE PROPÓSITO
 
 RESUMO EXECUTIVO:
 Total de Colaboradores Avaliados: ${usuarios.length}
-Score Médio: ${usuarios.length > 0 ? Math.round(usuarios.reduce((acc, u) => acc + u.score, 0) / usuarios.length) : 0} pontos
+• Questionários Tradicionais: ${questionariosTradicionais.length}
+• Questionários Integrados: ${questionariosIntegrados.length}
+
+Score Médio Geral: ${usuarios.length > 0 ? Math.round(usuarios.reduce((acc, u) => acc + (u.score || 0), 0) / usuarios.length) : 0} pontos
+Score Médio Tradicional: ${scoreMedioTradicional} pontos
+Score Médio Integrado: ${scoreMedioIntegrado} pontos
+
 Data de Geração: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}
 
-DISTRIBUIÇÃO POR STATUS:
-• Superou a Expectativa: ${usuarios.filter(u => u.status === "SUPEROU A EXPECTATIVA").length} colaboradores
-• Acima da Expectativa: ${usuarios.filter(u => u.status === "ACIMA DA EXPECTATIVA").length} colaboradores
-• Dentro da Expectativa: ${usuarios.filter(u => u.status === "DENTRO DA EXPECTATIVA").length} colaboradores
-• Abaixo da Expectativa: ${usuarios.filter(u => u.status === "ABAIXO DA EXPECTATIVA").length} colaboradores
+DISTRIBUIÇÃO POR STATUS (Questionários Tradicionais):
+• Superou a Expectativa: ${questionariosTradicionais.filter(u => u.status === "SUPEROU A EXPECTATIVA").length} colaboradores
+• Acima da Expectativa: ${questionariosTradicionais.filter(u => u.status === "ACIMA DA EXPECTATIVA").length} colaboradores
+• Dentro da Expectativa: ${questionariosTradicionais.filter(u => u.status === "DENTRO DA EXPECTATIVA").length} colaboradores
+• Abaixo da Expectativa: ${questionariosTradicionais.filter(u => u.status === "ABAIXO DA EXPECTATIVA").length} colaboradores
 
-RANKING DOS COLABORADORES:
+DISTRIBUIÇÃO POR CATEGORIA (Questionários Integrados):
+• Excelente: ${questionariosIntegrados.filter(u => u.categoria === "Excelente").length} colaboradores
+• Bom: ${questionariosIntegrados.filter(u => u.categoria === "Bom").length} colaboradores
+• Regular: ${questionariosIntegrados.filter(u => u.categoria === "Regular").length} colaboradores
+• Baixo: ${questionariosIntegrados.filter(u => u.categoria === "Baixo").length} colaboradores
+
+RANKING GERAL DOS COLABORADORES:
 ${usuarios
-  .sort((a, b) => b.score - a.score)
-  .map((usuario, index) => `${index + 1}º. ${usuario.nome} - ${usuario.score} pts (${usuario.status})`)
+  .sort((a, b) => (b.score || 0) - (a.score || 0))
+  .map((usuario, index) => {
+    const tipo = usuario.tipo === 'questionario_integrado' ? 'Integrado' : 'Tradicional';
+    const statusOuCategoria = usuario.status || usuario.categoria || 'Status não disponível';
+    return `${index + 1}º. ${usuario.nome} - ${usuario.score || 'N/A'} pts (${statusOuCategoria}) [${tipo}]`;
+  })
   .join('\n')
 }
 
 DETALHAMENTO INDIVIDUAL:
 ${'='.repeat(50)}
 
-${usuarios.map(usuario => `
+${usuarios.map(usuario => {
+  const tipo = usuario.tipo === 'questionario_integrado' ? 'Questionário Integrado' : 'Questionário Tradicional';
+  const identificacao = usuario.cpf ? `CPF: ${usuario.cpf}` : `Email: ${usuario.email || 'Não informado'}`;
+  const dataAvaliacao = usuario.dataRealizacao || 
+    (usuario.createdAt ? new Date(usuario.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível');
+  const statusOuCategoria = usuario.status || usuario.categoria || 'Status não disponível';
+  
+  let detalhes = `
 COLABORADOR: ${usuario.nome}
-CPF: ${usuario.cpf} | Data: ${usuario.dataRealizacao}
-Score: ${usuario.score} pontos | Status: ${usuario.status}
+${identificacao} | Data: ${dataAvaliacao}
+Score: ${usuario.score || 'N/A'} pontos | Status: ${statusOuCategoria}
+Tipo: ${tipo}
 
-Perfil: ${usuario.analiseClinica.perfil}
+`;
 
-Competências: ${usuario.analiseClinica.competencias.join(', ')}
+  if (usuario.tipo === 'questionario_integrado') {
+    detalhes += `Respostas: ${usuario.respostas ? usuario.respostas.flat().length : 0} respostas
+Tempo de Resposta: ${usuario.tempoResposta || 'N/A'} segundos
+`;
+  } else if (usuario.analiseClinica) {
+    detalhes += `Perfil: ${usuario.analiseClinica.perfil || 'Não disponível'}
 
-Áreas de Desenvolvimento: ${usuario.analiseClinica.areasDesenvolvimento.join(', ')}
+Competências: ${usuario.analiseClinica.competencias ? usuario.analiseClinica.competencias.join(', ') : 'Não disponível'}
 
-Recomendações: ${usuario.analiseClinica.recomendacoes.join(', ')}
+Áreas de Desenvolvimento: ${usuario.analiseClinica.areasDesenvolvimento ? usuario.analiseClinica.areasDesenvolvimento.join(', ') : 'Não disponível'}
 
-${'-'.repeat(50)}
-`).join('')}
+Recomendações: ${usuario.analiseClinica.recomendacoes ? usuario.analiseClinica.recomendacoes.join(', ') : 'Não disponível'}
+`;
+  }
+
+  return detalhes + `\n${'-'.repeat(50)}`;
+}).join('')}
 
 DADOS PARA ANÁLISE ESTATÍSTICA (CSV):
 ${csvHeader}${csvData}
@@ -752,7 +890,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [usuarios, caracteristicas]);
+  };
 
   // Componente Dashboard RH
   const DashboardComponent = useCallback(() => {
@@ -848,6 +986,10 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                     <div className="ml-4">
                       <p className="text-2xl font-bold text-gray-800">{usuarios.length}</p>
                       <p className="text-gray-600 text-sm">Total de Avaliados</p>
+                      <p className="text-xs text-gray-500">
+                        {usuarios.filter(u => u.tipo === 'questionario_integrado').length} Integrados • 
+                        {usuarios.filter(u => u.tipo !== 'questionario_integrado').length} Tradicionais
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -859,9 +1001,18 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                     </div>
                     <div className="ml-4">
                       <p className="text-2xl font-bold text-gray-800">
-                        {usuarios.filter(u => u.status === "SUPEROU A EXPECTATIVA" || u.status === "ACIMA DA EXPECTATIVA").length}
+                        {usuarios.filter(u => 
+                          u.status === "SUPEROU A EXPECTATIVA" || 
+                          u.status === "ACIMA DA EXPECTATIVA" ||
+                          u.categoria === "Excelente" ||
+                          u.categoria === "Bom"
+                        ).length}
                       </p>
                       <p className="text-gray-600 text-sm">Alto Potencial</p>
+                      <p className="text-xs text-gray-500">
+                        {usuarios.filter(u => u.status === "SUPEROU A EXPECTATIVA" || u.status === "ACIMA DA EXPECTATIVA").length} Tradicionais • 
+                        {usuarios.filter(u => u.categoria === "Excelente" || u.categoria === "Bom").length} Integrados
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -873,9 +1024,16 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                     </div>
                     <div className="ml-4">
                       <p className="text-2xl font-bold text-gray-800">
-                        {usuarios.filter(u => u.status === "DENTRO DA EXPECTATIVA").length}
+                        {usuarios.filter(u => 
+                          u.status === "DENTRO DA EXPECTATIVA" ||
+                          u.categoria === "Regular"
+                        ).length}
                       </p>
                       <p className="text-gray-600 text-sm">Dentro do Esperado</p>
+                      <p className="text-xs text-gray-500">
+                        {usuarios.filter(u => u.status === "DENTRO DA EXPECTATIVA").length} Tradicionais • 
+                        {usuarios.filter(u => u.categoria === "Regular").length} Integrados
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -887,9 +1045,17 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                     </div>
                     <div className="ml-4">
                       <p className="text-2xl font-bold text-gray-800">
-                        {usuarios.length > 0 ? Math.round(usuarios.reduce((acc, u) => acc + u.score, 0) / usuarios.length) : 0}
+                        {usuarios.length > 0 ? Math.round(usuarios.reduce((acc, u) => acc + (u.score || 0), 0) / usuarios.length) : 0}
                       </p>
                       <p className="text-gray-600 text-sm">Score Médio</p>
+                      <p className="text-xs text-gray-500">
+                        {usuarios.filter(u => u.tipo !== 'questionario_integrado').length > 0 ? 
+                          Math.round(usuarios.filter(u => u.tipo !== 'questionario_integrado').reduce((acc, u) => acc + (u.score || 0), 0) / usuarios.filter(u => u.tipo !== 'questionario_integrado').length) : 0
+                        } Tradicionais • 
+                        {usuarios.filter(u => u.tipo === 'questionario_integrado').length > 0 ? 
+                          Math.round(usuarios.filter(u => u.tipo === 'questionario_integrado').reduce((acc, u) => acc + (u.score || 0), 0) / usuarios.filter(u => u.tipo === 'questionario_integrado').length) : 0
+                        } Integrados
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -935,18 +1101,30 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                             </div>
                             <div className="ml-4">
                               <h3 className="text-lg font-semibold text-gray-800">{usuario.nome}</h3>
-                              <p className="text-gray-600 text-sm">CPF: {usuario.cpf} • {usuario.dataRealizacao}</p>
+                              <p className="text-gray-600 text-sm">
+                                {usuario.cpf ? `CPF: ${usuario.cpf} • ` : ''}
+                                {usuario.dataRealizacao || usuario.createdAt ? 
+                                  (usuario.dataRealizacao || new Date(usuario.createdAt).toLocaleDateString('pt-BR')) : 
+                                  'Data não disponível'
+                                }
+                                {usuario.tipo === 'questionario_integrado' && ' • Questionário Integrado'}
+                              </p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-4">
                             <div className="text-right">
-                              <div className="text-2xl font-bold text-gray-800">{usuario.score}</div>
+                              <div className="text-2xl font-bold text-gray-800">{usuario.score || 'N/A'}</div>
                               <div className={`text-sm font-medium ${
                                 usuario.status === "SUPEROU A EXPECTATIVA" ? "text-purple-600" :
                                 usuario.status === "ACIMA DA EXPECTATIVA" ? "text-green-600" :
-                                usuario.status === "DENTRO DA EXPECTATIVA" ? "text-blue-600" : "text-orange-600"
+                                usuario.status === "DENTRO DA EXPECTATIVA" ? "text-blue-600" :
+                                usuario.status === "ABAIXO DA EXPECTATIVA" ? "text-orange-600" :
+                                usuario.categoria === "Excelente" ? "text-purple-600" :
+                                usuario.categoria === "Bom" ? "text-green-600" :
+                                usuario.categoria === "Regular" ? "text-blue-600" :
+                                usuario.categoria === "Baixo" ? "text-orange-600" : "text-gray-600"
                               }`}>
-                                {usuario.status}
+                                {usuario.status || usuario.categoria || 'Status não disponível'}
                               </div>
                             </div>
                             <div className="flex items-center space-x-2">
@@ -998,19 +1176,39 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                     </div>
                     <div className="ml-6">
                       <h1 className="text-3xl font-bold text-gray-800">{usuarioSelecionado.nome}</h1>
-                      <p className="text-gray-600 mb-2">CPF: {usuarioSelecionado.cpf}</p>
-                      <p className="text-sm text-gray-500">Avaliado em: {usuarioSelecionado.dataRealizacao}</p>
+                      <p className="text-gray-600 mb-2">
+                        {usuarioSelecionado.cpf ? `CPF: ${usuarioSelecionado.cpf}` : `Email: ${usuarioSelecionado.email || 'Não informado'}`}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Avaliado em: {usuarioSelecionado.dataRealizacao || 
+                          (usuarioSelecionado.createdAt ? new Date(usuarioSelecionado.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível')}
+                      </p>
+                      {usuarioSelecionado.vaga && <p className="text-sm text-gray-500">Vaga: {usuarioSelecionado.vaga}</p>}
+                      {usuarioSelecionado.empresa && <p className="text-sm text-gray-500">Empresa: {usuarioSelecionado.empresa}</p>}
+                      {usuarioSelecionado.tipo === 'questionario_integrado' && (
+                        <p className="text-sm text-blue-600 font-medium">Questionário Integrado</p>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-4xl font-bold text-indigo-600 mb-2">{usuarioSelecionado.score}</div>
+                    <div className="text-4xl font-bold text-indigo-600 mb-2">{usuarioSelecionado.score || 'N/A'}</div>
                     <div className={`text-lg font-semibold px-4 py-2 rounded-full mb-4 ${
                       usuarioSelecionado.status === "SUPEROU A EXPECTATIVA" ? "bg-purple-100 text-purple-800" :
                       usuarioSelecionado.status === "ACIMA DA EXPECTATIVA" ? "bg-green-100 text-green-800" :
-                      usuarioSelecionado.status === "DENTRO DA EXPECTATIVA" ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"
+                      usuarioSelecionado.status === "DENTRO DA EXPECTATIVA" ? "bg-blue-100 text-blue-800" :
+                      usuarioSelecionado.status === "ABAIXO DA EXPECTATIVA" ? "bg-orange-100 text-orange-800" :
+                      usuarioSelecionado.categoria === "Excelente" ? "bg-purple-100 text-purple-800" :
+                      usuarioSelecionado.categoria === "Bom" ? "bg-green-100 text-green-800" :
+                      usuarioSelecionado.categoria === "Regular" ? "bg-blue-100 text-blue-800" :
+                      usuarioSelecionado.categoria === "Baixo" ? "bg-orange-100 text-orange-800" : "bg-gray-100 text-gray-800"
                     }`}>
-                      {usuarioSelecionado.status}
+                      {usuarioSelecionado.status || usuarioSelecionado.categoria || 'Status não disponível'}
                     </div>
+                    {usuarioSelecionado.percentual && (
+                      <div className="text-lg font-semibold text-gray-600 mb-4">
+                        Percentual: {usuarioSelecionado.percentual}%
+                      </div>
+                    )}
                     <button
                       onClick={() => downloadIndividual(usuarioSelecionado)}
                       className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center"
@@ -1022,90 +1220,143 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                 </div>
               </div>
 
-              {/* Análise Clínica */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                {/* Perfil Geral */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <User className="w-6 h-6 mr-2 text-indigo-600" />
-                    Perfil Geral
-                  </h3>
-                  <p className="text-gray-700 leading-relaxed">{usuarioSelecionado.analiseClinica.perfil}</p>
-                </div>
-
-                {/* Competências Identificadas */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <CheckCircle2 className="w-6 h-6 mr-2 text-green-600" />
-                    Competências Identificadas
-                  </h3>
-                  <ul className="space-y-2">
-                    {usuarioSelecionado.analiseClinica.competencias.map((comp, index) => (
-                      <li key={index} className="flex items-center text-gray-700">
-                        <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                        {comp}
-                      </li>
+              {/* Análise Clínica ou Respostas Detalhadas */}
+              {usuarioSelecionado.tipo === 'questionario_integrado' ? (
+                // Mostrar respostas detalhadas para questionário integrado
+                <div className="space-y-6">
+                  <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                      <FileText className="w-6 h-6 mr-2 text-indigo-600" />
+                      Respostas Detalhadas
+                    </h3>
+                    
+                    {usuarioSelecionado.respostas && usuarioSelecionado.respostas.map((secao, secaoIndex) => (
+                      <div key={secaoIndex} className="mb-6">
+                        <h4 className="text-lg font-semibold text-gray-700 mb-3">
+                          {secaoIndex === 0 ? 'Propósito e Valores' :
+                           secaoIndex === 1 ? 'Habilidades e Competências' :
+                           secaoIndex === 2 ? 'Experiência e Crescimento' :
+                           'Cultura e Ambiente'}
+                        </h4>
+                        <div className="space-y-3">
+                          {secao.map((resposta, perguntaIndex) => (
+                            <div key={perguntaIndex} className="bg-gray-50 rounded-lg p-4">
+                              <p className="text-sm font-medium text-gray-600 mb-2">
+                                Pergunta {perguntaIndex + 1}:
+                              </p>
+                              <p className="text-gray-800">{resposta}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     ))}
-                  </ul>
+                    
+                    {usuarioSelecionado.tempoResposta && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm font-medium text-blue-800">
+                          ⏱️ Tempo de Resposta: {usuarioSelecionado.tempoResposta} segundos
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                // Mostrar análise clínica para questionário tradicional
+                <>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    {/* Perfil Geral */}
+                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <User className="w-6 h-6 mr-2 text-indigo-600" />
+                        Perfil Geral
+                      </h3>
+                      <p className="text-gray-700 leading-relaxed">{usuarioSelecionado.analiseClinica?.perfil || 'Não disponível'}</p>
+                    </div>
 
-              {/* Análise Comportamental */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                  <h4 className="text-lg font-bold text-gray-800 mb-3">🔄 Adaptabilidade</h4>
-                  <p className="text-gray-700 text-sm">{usuarioSelecionado.analiseClinica.adaptabilidade}</p>
-                </div>
+                    {/* Competências Identificadas */}
+                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <CheckCircle2 className="w-6 h-6 mr-2 text-green-600" />
+                        Competências Identificadas
+                      </h3>
+                      <ul className="space-y-2">
+                        {usuarioSelecionado.analiseClinica?.competencias ? 
+                          usuarioSelecionado.analiseClinica.competencias.map((comp, index) => (
+                            <li key={index} className="flex items-center text-gray-700">
+                              <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                              {comp}
+                            </li>
+                          )) : 
+                          <li className="text-gray-500">Não disponível</li>
+                        }
+                      </ul>
+                    </div>
+                  </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                  <h4 className="text-lg font-bold text-gray-800 mb-3">👥 Liderança</h4>
-                  <p className="text-gray-700 text-sm">{usuarioSelecionado.analiseClinica.lideranca}</p>
-                </div>
+                  {/* Análise Comportamental */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                      <h4 className="text-lg font-bold text-gray-800 mb-3">🔄 Adaptabilidade</h4>
+                      <p className="text-gray-700 text-sm">{usuarioSelecionado.analiseClinica?.adaptabilidade || 'Não disponível'}</p>
+                    </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                  <h4 className="text-lg font-bold text-gray-800 mb-3">🤝 Relacionamento</h4>
-                  <p className="text-gray-700 text-sm">{usuarioSelecionado.analiseClinica.relacionamentoInterpessoal}</p>
-                </div>
-              </div>
+                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                      <h4 className="text-lg font-bold text-gray-800 mb-3">👥 Liderança</h4>
+                      <p className="text-gray-700 text-sm">{usuarioSelecionado.analiseClinica?.lideranca || 'Não disponível'}</p>
+                    </div>
 
-              {/* Áreas de Desenvolvimento e Recomendações */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <TrendingUp className="w-6 h-6 mr-2 text-yellow-600" />
-                    Áreas de Desenvolvimento
-                  </h3>
-                  <ul className="space-y-2">
-                    {usuarioSelecionado.analiseClinica.areasDesenvolvimento.map((area, index) => (
-                      <li key={index} className="flex items-center text-gray-700">
-                        <div className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
-                        {area}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                      <h4 className="text-lg font-bold text-gray-800 mb-3">🤝 Relacionamento</h4>
+                      <p className="text-gray-700 text-sm">{usuarioSelecionado.analiseClinica?.relacionamentoInterpessoal || 'Não disponível'}</p>
+                    </div>
+                  </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <FileText className="w-6 h-6 mr-2 text-blue-600" />
-                    Recomendações
-                  </h3>
-                  <ul className="space-y-2">
-                    {usuarioSelecionado.analiseClinica.recomendacoes.map((rec, index) => (
-                      <li key={index} className="flex items-center text-gray-700">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                        {rec}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+                  {/* Áreas de Desenvolvimento e Recomendações */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <TrendingUp className="w-6 h-6 mr-2 text-yellow-600" />
+                        Áreas de Desenvolvimento
+                      </h3>
+                      <ul className="space-y-2">
+                        {usuarioSelecionado.analiseClinica?.areasDesenvolvimento ? 
+                          usuarioSelecionado.analiseClinica.areasDesenvolvimento.map((area, index) => (
+                            <li key={index} className="flex items-center text-gray-700">
+                              <div className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
+                              {area}
+                            </li>
+                          )) : 
+                          <li className="text-gray-500">Não disponível</li>
+                        }
+                      </ul>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <FileText className="w-6 h-6 mr-2 text-blue-600" />
+                        Recomendações
+                      </h3>
+                      <ul className="space-y-2">
+                        {usuarioSelecionado.analiseClinica?.recomendacoes ? 
+                          usuarioSelecionado.analiseClinica.recomendacoes.map((rec, index) => (
+                            <li key={index} className="flex items-center text-gray-700">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                              {rec}
+                            </li>
+                          )) : 
+                          <li className="text-gray-500">Não disponível</li>
+                        }
+                      </ul>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
       </div>
     );
-  }, [usuarios, carregandoUsuarios, downloadConsolidado, exportarBackup, limparTodosDados, downloadIndividual, handleRhLogout, caracteristicas, frasesVida, valores, setCurrentView, setUsuarioSelecionado]);
+  }, [usuarios, carregandoUsuarios, downloadConsolidado, exportarBackup, limparTodosDados, downloadIndividual, handleRhLogout]);
 
   // Renderização principal
   if (currentView === 'formulario') {

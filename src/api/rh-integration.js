@@ -131,33 +131,78 @@ export const receberScore = async (sessionId, scoreData) => {
     console.log('📊 Recebendo score para sessão:', sessionId);
     
     // Buscar candidato pela sessão
-    const candidatoQuery = query(
+    let candidatoQuery = query(
       candidatosCollection, 
       where('sessionId', '==', sessionId)
     );
-    const candidatoSnapshot = await getDocs(candidatoQuery);
+    let candidatoSnapshot = await getDocs(candidatoQuery);
+    
+    let candidatoId;
+    let candidatoData;
     
     if (candidatoSnapshot.empty) {
-      throw new Error('Candidato não encontrado para esta sessão');
+      // Se não existir candidato, criar um com dados básicos
+      console.log('📝 Candidato não encontrado, criando novo registro...');
+      
+      const novoCandidato = {
+        nome: scoreData.nome || 'Candidato',
+        email: scoreData.email || 'candidato@email.com',
+        telefone: '',
+        plataforma: 'questionario_direto',
+        vaga: scoreData.vaga || 'Não especificada',
+        empresa: scoreData.empresa || 'Não especificada',
+        sessionId,
+        status: 'questionario_finalizado',
+        criadoEm: serverTimestamp(),
+        atualizadoEm: serverTimestamp()
+      };
+      
+      const candidatoRef = await addDoc(candidatosCollection, novoCandidato);
+      candidatoId = candidatoRef.id;
+      candidatoData = novoCandidato;
+      
+      console.log('✅ Novo candidato criado:', candidatoId);
+    } else {
+      const candidatoDoc = candidatoSnapshot.docs[0];
+      candidatoId = candidatoDoc.id;
+      candidatoData = candidatoDoc.data();
     }
     
-    const candidatoDoc = candidatoSnapshot.docs[0];
-    const candidatoId = candidatoDoc.id;
-    const candidatoData = candidatoDoc.data();
-    
     // Buscar questionário
-    const questionarioQuery = query(
+    let questionarioQuery = query(
       questionariosCollection,
       where('sessionId', '==', sessionId)
     );
-    const questionarioSnapshot = await getDocs(questionarioQuery);
+    let questionarioSnapshot = await getDocs(questionarioQuery);
+    
+    let questionarioId;
     
     if (questionarioSnapshot.empty) {
-      throw new Error('Questionário não encontrado para esta sessão');
+      // Se não existir questionário, criar um
+      console.log('📝 Questionário não encontrado, criando novo registro...');
+      
+      const novoQuestionario = {
+        candidatoId,
+        sessionId,
+        tipo: 'proposito',
+        link: `${window.location.origin}/questionario/${sessionId}`,
+        plataforma: candidatoData.plataforma || 'questionario_direto',
+        vaga: candidatoData.vaga || 'Não especificada',
+        empresa: candidatoData.empresa || 'Não especificada',
+        status: 'finalizado',
+        enviadoEm: serverTimestamp(),
+        expiraEm: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias
+        criadoEm: serverTimestamp()
+      };
+      
+      const questionarioRef = await addDoc(questionariosCollection, novoQuestionario);
+      questionarioId = questionarioRef.id;
+      
+      console.log('✅ Novo questionário criado:', questionarioId);
+    } else {
+      const questionarioDoc = questionarioSnapshot.docs[0];
+      questionarioId = questionarioDoc.id;
     }
-    
-    const questionarioDoc = questionarioSnapshot.docs[0];
-    const questionarioId = questionarioDoc.id;
     
     // Salvar score
     const scoreRef = await addDoc(scoresCollection, {
@@ -194,7 +239,7 @@ export const receberScore = async (sessionId, scoreData) => {
       candidatoId,
       questionarioId,
       scoreId: scoreRef.id,
-      plataforma: candidatoData.plataforma,
+      plataforma: candidatoData.plataforma || 'questionario_direto',
       dados: {
         nome: candidatoData.nome,
         email: candidatoData.email,

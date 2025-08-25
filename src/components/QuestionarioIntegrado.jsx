@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, ArrowRight, ArrowLeft, Clock, User, FileText } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight, ArrowLeft, Clock, User, FileText, Heart, Sparkles } from 'lucide-react';
 import { receberScore } from '../api/rh-integration';
+import { adicionarUsuario } from '../firebase/services';
 
 const QuestionarioIntegrado = ({ sessionId }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -11,6 +12,7 @@ const QuestionarioIntegrado = ({ sessionId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [candidatoData, setCandidatoData] = useState(null);
+  const [questionarioFinalizado, setQuestionarioFinalizado] = useState(false);
 
   // Dados do questionário
   const questions = [
@@ -116,7 +118,27 @@ const QuestionarioIntegrado = ({ sessionId }) => {
       // Calcular score baseado nas respostas
       const scoreData = calcularScore();
       
-      // Enviar score para a API
+      // Salvar dados no Firebase
+      const dadosUsuario = {
+        nome: candidatoData?.nome || 'Candidato',
+        email: candidatoData?.email || 'candidato@email.com',
+        vaga: candidatoData?.vaga || 'Não especificada',
+        empresa: candidatoData?.empresa || 'Não especificada',
+        sessionId: sessionId,
+        respostas: answers,
+        score: scoreData.score,
+        percentual: scoreData.percentual,
+        categoria: scoreData.categoria,
+        tempoResposta: tempoResposta,
+        detalhes: scoreData.detalhes,
+        dataRealizacao: new Date().toISOString(),
+        tipo: 'questionario_integrado'
+      };
+
+      // Salvar no Firebase
+      await adicionarUsuario(dadosUsuario);
+      
+      // Enviar score para a API de integração RH
       const resultado = await receberScore(sessionId, {
         ...scoreData,
         tempoResposta,
@@ -125,8 +147,8 @@ const QuestionarioIntegrado = ({ sessionId }) => {
       
       console.log('✅ Questionário finalizado com sucesso!', resultado);
       
-      // Redirecionar para tela de sucesso
-      window.location.href = `/sucesso/${sessionId}`;
+      // Marcar como finalizado e mostrar tela de agradecimentos
+      setQuestionarioFinalizado(true);
       
     } catch (error) {
       setError('Erro ao finalizar questionário');
@@ -193,6 +215,83 @@ const QuestionarioIntegrado = ({ sessionId }) => {
       section.every(answer => answer && answer.trim() !== '')
     );
   };
+
+  // Tela de agradecimentos
+  if (questionarioFinalizado) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-white rounded-3xl shadow-2xl p-8 border border-indigo-100">
+          <div className="text-center mb-8">
+            <div className="mx-auto w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-lg animate-bounce-in">
+              <CheckCircle2 className="w-12 h-12 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              🎉 Questionário Finalizado!
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Obrigado por participar da avaliação
+            </p>
+          </div>
+          
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 mb-6 border border-indigo-100/50">
+            <h3 className="text-xl font-semibold text-indigo-800 mb-3 flex items-center">
+              <Heart className="w-5 h-5 mr-2 text-indigo-600" />
+              Obrigado, {candidatoData?.nome || 'Candidato'}!
+            </h3>
+            <p className="text-gray-700 mb-3 leading-relaxed">
+              Suas respostas foram enviadas com sucesso para análise da equipe de RH.
+            </p>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Em breve você receberá um retorno sobre seu perfil e recomendações personalizadas.
+            </p>
+          </div>
+
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl mb-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Sparkles className="h-5 w-5 text-blue-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  <strong>✅ Dados Enviados:</strong> Suas respostas já foram salvas no sistema e estão disponíveis para análise da equipe de RH.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-xl mb-6">
+            <div className="flex items-start">
+              <Sparkles className="w-5 h-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-gray-700 font-medium mb-1">
+                  <strong>Lembre-se:</strong>
+                </p>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Este processo é uma ferramenta de autoconhecimento e desenvolvimento profissional.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+            <div className="flex items-center text-green-800 text-sm">
+              <CheckCircle2 className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span>
+                <strong>Sucesso:</strong> Questionário finalizado e dados enviados ao sistema
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Rodapé */}
+        <div className="text-center mt-6">
+          <p className="text-sm text-gray-500">
+            Sistema de Análise de Propósito • Desenvolvido com ❤️
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

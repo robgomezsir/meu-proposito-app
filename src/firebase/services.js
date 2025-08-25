@@ -37,11 +37,22 @@ export const adicionarUsuario = async (usuario) => {
     
     verificarArraysAninhados(usuario);
     
-    const docRef = await addDoc(usuariosCollection, {
+    // Preparar dados para salvar
+    const dadosParaSalvar = {
       ...usuario,
       timestamp: serverTimestamp(),
       createdAt: new Date().toISOString()
-    });
+    };
+    
+    // Se for questionário integrado, adicionar campos específicos
+    if (usuario.tipo === 'questionario_integrado') {
+      dadosParaSalvar.tipoQuestionario = 'proposito';
+      dadosParaSalvar.origem = 'questionario_integrado';
+      dadosParaSalvar.status = 'finalizado';
+      dadosParaSalvar.finalizadoEm = new Date().toISOString();
+    }
+    
+    const docRef = await addDoc(usuariosCollection, dadosParaSalvar);
     
     console.log('✅ Usuário adicionado com sucesso! ID:', docRef.id);
     return { id: docRef.id, ...usuario };
