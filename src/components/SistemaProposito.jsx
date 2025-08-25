@@ -614,11 +614,9 @@ const SistemaProposito = () => {
   const SucessoComponent = useCallback(() => (
     <SuccessScreen
       userName={userInfo.nome}
-      dadosEnviados={dadosEnviados}
-      onExportarBackup={salvarDados}
       onResetFormulario={resetFormulario}
     />
-  ), [userInfo.nome, dadosEnviados, salvarDados, resetFormulario]);
+  ), [userInfo.nome, resetFormulario]);
 
         // Funções de Download
     const downloadIndividual = (usuario) => {

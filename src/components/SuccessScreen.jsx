@@ -6,8 +6,6 @@ import { CheckCircle2, Heart, Sparkles, Shield, ArrowRight, RefreshCw } from 'lu
 
 const SuccessScreen = ({ 
   userName, 
-  dadosEnviados, 
-  onExportarBackup, 
   onResetFormulario 
 }) => {
   return (
@@ -59,38 +57,21 @@ const SuccessScreen = ({
 
             {/* Status dos dados */}
             <div className="mb-6">
-              {dadosEnviados ? (
-                <div className="text-center space-y-4">
-                  <div className="bg-green-100 border border-green-300 text-green-800 px-6 py-4 rounded-xl text-lg font-semibold flex items-center justify-center">
-                    <Shield className="w-5 h-5 mr-2" />
-                    ✅ Dados já enviados ao RH
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={onResetFormulario}
-                    className="flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
-                  >
-                    <RefreshCw className="w-5 h-5" />
-                    <span>🔄 Fazer Nova Avaliação</span>
-                  </Button>
+              <div className="text-center space-y-4">
+                <div className="bg-green-100 border border-green-300 text-green-800 px-6 py-4 rounded-xl text-lg font-semibold flex items-center justify-center">
+                  <Shield className="w-5 h-5 mr-2" />
+                  ✅ Dados enviados ao RH e backup exportado
                 </div>
-              ) : (
-                <div className="text-center">
-                  <Button
-                    variant="gradient"
-                    size="xl"
-                    onClick={onExportarBackup}
-                    className="w-full shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center space-x-2"
-                  >
-                    <span>🔥 Exportar Backup</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </Button>
-                  <p className="text-sm text-gray-500 mt-3">
-                    Clique no botão acima para finalizar o processo
-                  </p>
-                </div>
-              )}
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={onResetFormulario}
+                  className="flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+                >
+                  <RefreshCw className="w-5 h-5" />
+                  <span>🔄 Fazer Nova Avaliação</span>
+                </Button>
+              </div>
             </div>
 
             {/* Informações adicionais */}
