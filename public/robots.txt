@@ -1,3 +1,11 @@
-# https://www.robotstxt.org/robotstxt.html
+# Sistema de Análise de Propósito - Robots.txt
 User-agent: *
-Disallow:
+Allow: /
+
+# Sitemap (opcional - pode ser adicionado quando houver)
+# Sitemap: https://seu-usuario.github.io/meu-proposito-app/sitemap.xml
+
+# Bloquear acesso a arquivos sensíveis
+Disallow: /env-config.js
+Disallow: /_redirects
+Disallow: /.nojekyll
