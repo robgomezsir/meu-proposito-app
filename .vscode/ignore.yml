@@ -1,0 +1,12 @@
+# Configurações para ignorar avisos do GitHub Actions
+# Este arquivo ajuda o VS Code a entender que as actions são válidas
+
+# Actions do GitHub que são válidas mas não podem ser resolvidas localmente
+# actions/checkout@v3
+# actions/setup-node@v3
+# actions/configure-pages@v2
+# actions/upload-pages-artifact@v2
+# actions/deploy-pages@v2
+
+# Estas actions são oficiais do GitHub e funcionam corretamente no runtime
+# Os avisos do VS Code são apenas limitações da validação local
