@@ -2,6 +2,7 @@
   "name": "sistema-proposito",
   "version": "1.0.0",
   "private": true,
+  "homepage": "https://robgomezsir.github.io/meu-proposito-app",
   "dependencies": {
     "clsx": "^2.1.1",
     "firebase": "^9.23.0",
@@ -13,9 +14,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build-render": "node scripts/deploy-config.js && react-scripts build",
-    "build-gh": "cross-env REACT_APP_ENV=github-pages node scripts/deploy-config.js && react-scripts build",
-    "build-local": "cross-env REACT_APP_ENV=local node scripts/deploy-config.js && react-scripts build",
+    "build-render": "cross-env REACT_APP_ENV=render react-scripts build",
+    "build-gh": "cross-env REACT_APP_ENV=github-pages react-scripts build",
+    "build-local": "cross-env REACT_APP_ENV=local react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build-gh",
@@ -40,6 +41,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "homepage": "https://robgomezsir.github.io/meu-proposito-app"
+  }
 }

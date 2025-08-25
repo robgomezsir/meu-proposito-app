@@ -19,13 +19,12 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout
       
     - name: Setup Node.js
-      uses: actions/setup-node@v2
+      uses: actions/setup-node
       with:
         node-version: '18'
-        cache: 'npm'
         
     - name: Install dependencies
       run: npm ci
@@ -38,9 +37,6 @@ jobs:
         export REACT_APP_ASSET_PREFIX=/meu-proposito-app
         export REACT_APP_USE_ABSOLUTE_PATHS=true
         
-        # Configurar package.json
-        node scripts/deploy-config.js
-        
         # Build
         npm run build
       env:
@@ -50,10 +46,10 @@ jobs:
         REACT_APP_USE_ABSOLUTE_PATHS: true
         
     - name: Setup Pages
-      uses: actions/configure-pages@v1
+      uses: actions/configure-pages
       
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v1
+      uses: actions/upload-pages-artifact
       with:
         path: './build'
         
@@ -66,4 +62,4 @@ jobs:
     steps:
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v1
+      uses: actions/deploy-pages
