@@ -6,17 +6,8 @@ on:
   # Permite execução manual do workflow
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
@@ -43,7 +34,7 @@ jobs:
         # Build
         npm run build
         
-        # Verificar se o build foi criado corretamente
+        # Verificar se o build foi criado
         ls -la build/
       env:
         REACT_APP_ENV: github-pages
@@ -51,21 +42,9 @@ jobs:
         REACT_APP_ASSET_PREFIX: /meu-proposito-app
         REACT_APP_USE_ABSOLUTE_PATHS: true
         
-    - name: Setup Pages
-      uses: actions/configure-pages@v2
-      
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v1
-      with:
-        path: './build'
-        
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
     - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v1
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build
+        cname: false
