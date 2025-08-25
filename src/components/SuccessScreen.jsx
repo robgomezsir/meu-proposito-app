@@ -20,10 +20,10 @@ const SuccessScreen = ({
               <CheckCircle2 className="w-12 h-12 text-white" />
             </div>
             <CardTitle className="text-3xl font-bold mb-2">
-              🎉 Propósito Enviado com Sucesso!
+              🎯 QUASE LÁ!
             </CardTitle>
             <p className="text-green-100 text-lg">
-              Obrigado por participar da avaliação
+              Nos envie seu Propósito no botão abaixo
             </p>
           </CardHeader>
           
@@ -35,7 +35,7 @@ const SuccessScreen = ({
                 Obrigado, {userName}!
               </h3>
               <p className="text-gray-700 mb-3 leading-relaxed">
-                Suas respostas foram enviadas com sucesso para análise da equipe de RH.
+                Suas respostas serão enviadas com sucesso para análise da equipe de RH.
               </p>
               <p className="text-sm text-gray-600 leading-relaxed">
                 Em breve você receberá um retorno sobre seu perfil e recomendações personalizadas.
