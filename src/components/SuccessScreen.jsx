@@ -83,11 +83,11 @@ const SuccessScreen = ({
                     onClick={onExportarBackup}
                     className="w-full shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center space-x-2"
                   >
-                    <span>🔥 Exportar Backup</span>
+                    <span>🔥 Enviar respostas ao RH</span>
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                   <p className="text-sm text-gray-500 mt-3">
-                    Clique no botão acima para finalizar o processo
+                    Clique no botão acima para enviar suas respostas ao RH
                   </p>
                 </div>
               )}
