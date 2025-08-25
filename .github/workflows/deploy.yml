@@ -24,23 +24,12 @@ jobs:
       run: npm ci
       
     - name: Build for GitHub Pages
+      run: npm run build-gh
+        
+    - name: Verify build
       run: |
-        # Configurar variáveis de ambiente
-        export REACT_APP_ENV=github-pages
-        export REACT_APP_PUBLIC_URL=/meu-proposito-app
-        export REACT_APP_ASSET_PREFIX=/meu-proposito-app
-        export REACT_APP_USE_ABSOLUTE_PATHS=true
-        
-        # Build
-        npm run build
-        
-        # Verificar se o build foi criado
+        echo "Build completed for GitHub Pages"
         ls -la build/
-      env:
-        REACT_APP_ENV: github-pages
-        REACT_APP_PUBLIC_URL: /meu-proposito-app
-        REACT_APP_ASSET_PREFIX: /meu-proposito-app
-        REACT_APP_USE_ABSOLUTE_PATHS: true
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
