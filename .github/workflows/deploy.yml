@@ -20,13 +20,30 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
-    - name: Build for GitHub Pages
-      run: npm run build-gh
+    - name: Setup environment for GitHub Pages
+      run: |
+        echo "REACT_APP_ENV=github-pages" >> $GITHUB_ENV
+        echo "REACT_APP_PUBLIC_URL=/meu-proposito-app" >> $GITHUB_ENV
+        echo "REACT_APP_ASSET_PREFIX=/meu-proposito-app" >> $GITHUB_ENV
+        echo "REACT_APP_USE_ABSOLUTE_PATHS=true" >> $GITHUB_ENV
+        
+    - name: Configure package.json for GitHub Pages
+      run: |
+        node scripts/deploy-config.js
       env:
         REACT_APP_ENV: github-pages
+        
+    - name: Build for GitHub Pages
+      run: npm run build
+      env:
+        REACT_APP_ENV: github-pages
+        REACT_APP_PUBLIC_URL: /meu-proposito-app
+        REACT_APP_ASSET_PREFIX: /meu-proposito-app
+        REACT_APP_USE_ABSOLUTE_PATHS: true
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./build
+        force_orphan: true
