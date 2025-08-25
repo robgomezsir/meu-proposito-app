@@ -4,7 +4,8 @@
 export const DEPLOY_CONFIG = {
   "homepage": "https://robgomezsir.github.io/meu-proposito-app",
   "assetPrefix": "/meu-proposito-app",
-  "useAbsolutePaths": true
+  "useAbsolutePaths": true,
+  "publicUrl": "/meu-proposito-app"
 };
 
 export default DEPLOY_CONFIG;

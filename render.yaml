@@ -11,6 +11,8 @@ services:
         value: render
       - key: PUBLIC_URL
         value: ""
+      - key: CI
+        value: "false"
     routes:
       - type: rewrite
         source: /*
@@ -19,3 +21,6 @@ services:
       - path: /*
         name: Cache-Control
         value: "no-cache, no-store, must-revalidate"
+      - path: /static/*
+        name: Cache-Control
+        value: "public, max-age=31536000"

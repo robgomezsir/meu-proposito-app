@@ -13,17 +13,20 @@ const configs = {
   'github-pages': {
     homepage: 'https://robgomezsir.github.io/meu-proposito-app',
     assetPrefix: '/meu-proposito-app',
-    useAbsolutePaths: true
+    useAbsolutePaths: true,
+    publicUrl: '/meu-proposito-app'
   },
   'render': {
     homepage: '',
     assetPrefix: '',
-    useAbsolutePaths: false
+    useAbsolutePaths: false,
+    publicUrl: ''
   },
   'local': {
     homepage: '',
     assetPrefix: '',
-    useAbsolutePaths: false
+    useAbsolutePaths: false,
+    publicUrl: ''
   }
 };
 
@@ -59,4 +62,16 @@ export default DEPLOY_CONFIG;
 fs.writeFileSync(envConfigPath, envConfigContent);
 
 console.log(`✅ Arquivo de configuração de ambiente criado: ${envConfigPath}`);
+
+// Criar arquivo .env para o build
+const envPath = path.join(__dirname, '..', '.env');
+const envContent = `REACT_APP_ENV=${ENV}
+REACT_APP_PUBLIC_URL=${config.publicUrl}
+REACT_APP_ASSET_PREFIX=${config.assetPrefix}
+REACT_APP_USE_ABSOLUTE_PATHS=${config.useAbsolutePaths}
+`;
+
+fs.writeFileSync(envPath, envContent);
+console.log(`✅ Arquivo .env criado para ${ENV}`);
+
 console.log(`🚀 Deploy configurado para ${ENV}`);
