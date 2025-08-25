@@ -66,7 +66,14 @@ console.log('🌍 Configuração de ambiente detectada:', envConfig);
 // Função para obter URL de assets
 export const getAssetUrl = (path) => {
   if (path.startsWith('http')) return path;
-  return `${envConfig.assetPrefix}${path}`;
+  
+  // Para GitHub Pages, usar caminhos absolutos
+  if (envConfig.platform === 'github-pages') {
+    return `${envConfig.assetPrefix}${path}`;
+  }
+  
+  // Para outros ambientes, usar caminhos relativos
+  return path.startsWith('/') ? path : `./${path}`;
 };
 
 // Função para obter URL de API

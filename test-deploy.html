@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Deploy - Sistema de Propósito</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste de Deploy - Sistema de Análise de Propósito</h1>
+    
+    <div class="test-section">
+        <h2>🔧 Teste de Configuração de Ambiente</h2>
+        <button onclick="testEnvironmentDetection()">Detectar Ambiente</button>
+        <button onclick="testBuildConfig()">Testar Build Config</button>
+        <div id="envStatus"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 Teste de URLs</h2>
+        <button onclick="testUrls()">Testar URLs</button>
+        <div id="urlStatus"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📱 Teste de Funcionalidade</h2>
+        <button onclick="testAppFunctionality()">Testar Aplicação</button>
+        <div id="appStatus"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Logs de Teste</h2>
+        <div id="testLog" class="log"></div>
+    </div>
+
+    <script>
+        let testLog = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            testLog.push(logEntry);
+            
+            const logElement = document.getElementById('testLog');
+            logElement.textContent = testLog.join('\n');
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(logEntry);
+        }
+
+        function testEnvironmentDetection() {
+            log('🔍 Iniciando teste de detecção de ambiente...');
+            
+            const hostname = window.location.hostname;
+            const pathname = window.location.pathname;
+            const port = window.location.port;
+            
+            log(`📍 Hostname: ${hostname}`);
+            log(`📍 Pathname: ${pathname}`);
+            log(`📍 Port: ${port}`);
+            
+            let environment = 'desconhecido';
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                environment = 'local';
+            } else if (hostname.includes('github.io')) {
+                environment = 'github-pages';
+            } else if (hostname.includes('onrender.com')) {
+                environment = 'render';
+            }
+            
+            log(`🌍 Ambiente detectado: ${environment}`);
+            
+            const statusElement = document.getElementById('envStatus');
+            statusElement.innerHTML = `
+                <div class="status success">
+                    ✅ Ambiente detectado com sucesso: <strong>${environment}</strong><br>
+                    📍 Hostname: ${hostname}<br>
+                    📍 Porta: ${port}<br>
+                    📍 Path: ${pathname}
+                </div>
+            `;
+        }
+
+        function testBuildConfig() {
+            log('🔧 Testando configuração de build...');
+            
+            if (window.__BUILD_CONFIG__) {
+                const config = window.__BUILD_CONFIG__;
+                log(`✅ Build config encontrado:`, config);
+                
+                const statusElement = document.getElementById('envStatus');
+                statusElement.innerHTML += `
+                    <div class="status success">
+                        ✅ Build config carregado:<br>
+                        📏 Caminhos: ${config.useAbsolutePaths ? 'absolutos' : 'relativos'}<br>
+                        🏠 Base Path: ${config.basePath || 'não definido'}<br>
+                        🔗 Asset Prefix: ${config.assetPrefix || 'não definido'}
+                    </div>
+                `;
+            } else {
+                log('❌ Build config não encontrado');
+                
+                const statusElement = document.getElementById('envStatus');
+                statusElement.innerHTML += `
+                    <div class="status error">
+                        ❌ Build config não encontrado. Verifique se os scripts de configuração foram carregados.
+                    </div>
+                `;
+            }
+        }
+
+        function testUrls() {
+            log('🌐 Testando URLs de recursos...');
+            
+            const scripts = document.querySelectorAll('script[src]');
+            const links = document.querySelectorAll('link[href]');
+            
+            log(`📜 Scripts encontrados: ${scripts.length}`);
+            log(`🔗 Links encontrados: ${links.length}`);
+            
+            let urlStatus = '<div class="status info">📊 Status das URLs:</div>';
+            
+            scripts.forEach((script, index) => {
+                const src = script.src;
+                log(`📜 Script ${index + 1}: ${src}`);
+                
+                if (src.includes('/meu-proposito-app/')) {
+                    urlStatus += `<div class="status success">✅ Script ${index + 1}: Caminho absoluto correto</div>`;
+                } else if (src.includes('./static/') || src.includes('/static/')) {
+                    urlStatus += `<div class="status success">✅ Script ${index + 1}: Caminho relativo correto</div>`;
+                } else {
+                    urlStatus += `<div class="status error">❌ Script ${index + 1}: Caminho suspeito</div>`;
+                }
+            });
+            
+            links.forEach((link, index) => {
+                const href = link.href;
+                log(`🔗 Link ${index + 1}: ${href}`);
+                
+                if (href.includes('/meu-proposito-app/')) {
+                    urlStatus += `<div class="status success">✅ Link ${index + 1}: Caminho absoluto correto</div>`;
+                } else if (href.includes('./static/') || href.includes('/static/')) {
+                    urlStatus += `<div class="status success">✅ Link ${index + 1}: Caminho relativo correto</div>`;
+                } else {
+                    urlStatus += `<div class="status error">❌ Link ${index + 1}: Caminho suspeito</div>`;
+                }
+            });
+            
+            document.getElementById('urlStatus').innerHTML = urlStatus;
+        }
+
+        function testAppFunctionality() {
+            log('📱 Testando funcionalidade da aplicação...');
+            
+            // Verificar se o React está funcionando
+            if (window.React) {
+                log('✅ React detectado');
+            } else {
+                log('❌ React não detectado');
+            }
+            
+            // Verificar se o elemento root existe
+            const rootElement = document.getElementById('root');
+            if (rootElement) {
+                log('✅ Elemento root encontrado');
+                
+                // Verificar se há conteúdo renderizado
+                if (rootElement.children.length > 0) {
+                    log('✅ Aplicação renderizada com sucesso');
+                    document.getElementById('appStatus').innerHTML = `
+                        <div class="status success">
+                            ✅ Aplicação funcionando perfeitamente!<br>
+                            🎯 Elemento root encontrado<br>
+                            🎨 Conteúdo renderizado<br>
+                            🚀 Sistema operacional
+                        </div>
+                    `;
+                } else {
+                    log('⚠️ Elemento root vazio - aplicação pode não ter carregado');
+                    document.getElementById('appStatus').innerHTML = `
+                        <div class="status error">
+                            ⚠️ Aplicação pode não ter carregado completamente<br>
+                            🎯 Elemento root encontrado mas vazio<br>
+                            🔍 Verifique o console para erros
+                        </div>
+                    `;
+                }
+            } else {
+                log('❌ Elemento root não encontrado');
+                document.getElementById('appStatus').innerHTML = `
+                    <div class="status error">
+                        ❌ Elemento root não encontrado<br>
+                        🔍 Verifique se o HTML está correto
+                    </div>
+                `;
+            }
+        }
+
+        // Executar testes automáticos ao carregar a página
+        window.addEventListener('load', () => {
+            log('🚀 Página carregada - iniciando testes automáticos...');
+            setTimeout(() => {
+                testEnvironmentDetection();
+                setTimeout(() => {
+                    testBuildConfig();
+                    setTimeout(() => {
+                        testUrls();
+                        setTimeout(() => {
+                            testAppFunctionality();
+                        }, 500);
+                    }, 500);
+                }, 500);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
