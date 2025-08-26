@@ -10,16 +10,16 @@ export const adicionarUsuario = async (usuario) => {
   try {
     // Preparar dados para salvar (adaptar para estrutura do Supabase)
     const dadosParaSalvar = {
-      nome: usuario.nome,
-      cpf: usuario.cpf,
-      email: usuario.email,
-      respostas: usuario.respostas,
-      score: usuario.score,
-      status: usuario.status,
-      categoria: usuario.categoria,
-      analise_clinica: usuario.analiseClinica,
+      nome: usuario.nome || '',
+      cpf: usuario.cpf || '',
+      email: usuario.email || '',
+      respostas: usuario.respostas || {},
+      score: usuario.score || 0,
+      status: usuario.status || '',
+      categoria: usuario.categoria || usuario.status || '',
+      analise_clinica: usuario.analiseClinica || {},
       data_realizacao: usuario.dataRealizacao || new Date().toISOString(),
-      tipo: usuario.tipo,
+      tipo: usuario.tipo || 'questionario_tradicional',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }

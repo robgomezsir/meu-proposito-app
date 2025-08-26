@@ -630,9 +630,26 @@ const SistemaProposito = () => {
     }
   };
 
-  // Função para enviar dados ao RH (salvar no Firebase)
+  // Função para enviar dados ao RH (salvar no Supabase)
   const salvarDados = async () => {
     try {
+      // Verificar se todos os dados necessários estão presentes
+      if (!userInfo.nome || !userInfo.cpf) {
+        alert('❌ Dados incompletos!\n\nNome e CPF são obrigatórios para envio.');
+        return;
+      }
+      
+      if (!answers || answers.length < 4 || answers.some(arr => !arr || arr.length === 0)) {
+        alert('❌ Questionário incompleto!\n\nTodas as perguntas devem ser respondidas.');
+        return;
+      }
+      
+      console.log('✅ Validação de dados passou:', {
+        nome: userInfo.nome,
+        cpf: userInfo.cpf,
+        respostasCompletas: answers.every(arr => arr && arr.length === 5)
+      });
+      
       // Calcular score e análise
       const score = calculateScore(answers);
       const analiseClinica = getAnaliseClinica(score, answers);
@@ -649,17 +666,27 @@ const SistemaProposito = () => {
       const novoUsuario = {
         nome: userInfo.nome,
         cpf: userInfo.cpf,
+        email: '', // Campo obrigatório para Supabase
         respostas: respostasConvertidas,
         score: score,
         status: getStatus(score),
+        categoria: getStatus(score), // Campo obrigatório para Supabase
         analiseClinica: analiseClinica,
-        dataRealizacao: new Date().toLocaleDateString('pt-BR')
+        dataRealizacao: new Date().toLocaleDateString('pt-BR'),
+        tipo: 'questionario_tradicional' // Campo obrigatório para Supabase
       };
       
       console.log('📝 Dados preparados para envio:', novoUsuario);
+      console.log('🔍 Campos obrigatórios verificados:', {
+        nome: !!novoUsuario.nome,
+        cpf: !!novoUsuario.cpf,
+        email: !!novoUsuario.email,
+        categoria: !!novoUsuario.categoria,
+        tipo: !!novoUsuario.tipo
+      });
       
-      // Salvar no Firebase
-      console.log('🔥 Salvando no Firebase...');
+      // Salvar no Supabase
+      console.log('🔥 Salvando no Supabase...');
       const usuarioSalvo = await adicionarUsuario(novoUsuario);
       console.log('✅ Usuário salvo com sucesso:', usuarioSalvo);
       
@@ -680,8 +707,23 @@ const SistemaProposito = () => {
       }, 1000);
       
     } catch (error) {
-      console.error('Erro ao enviar dados ao RH:', error);
-      alert(`❌ Erro ao enviar dados:\n\n${error.message}\n\nTente novamente.`);
+      console.error('❌ ERRO AO ENVIAR DADOS AO RH:', error);
+      console.error('📋 Stack trace:', error.stack);
+      console.error('📊 Dados que tentaram ser enviados:', {
+        nome: userInfo.nome,
+        cpf: userInfo.cpf,
+        score: calculateScore(answers),
+        status: getStatus(calculateScore(answers))
+      });
+      
+      let mensagemErro = 'Erro desconhecido';
+      if (error.message) {
+        mensagemErro = error.message;
+      } else if (error.error) {
+        mensagemErro = error.error;
+      }
+      
+      alert(`❌ Erro ao enviar dados:\n\n${mensagemErro}\n\n🔍 Verifique o console para mais detalhes.\n\nTente novamente.`);
     }
   };
 
