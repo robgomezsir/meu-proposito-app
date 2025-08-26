@@ -556,18 +556,35 @@ const SistemaProposito = () => {
 
   // Função para testar conexão com Supabase
   const handleTestarConexao = async () => {
+    console.log('🔘 BOTÃO CLICADO: handleTestarConexao iniciado');
+    
+    // Verificar se a função foi importada corretamente
+    if (typeof testarConexaoSupabase !== 'function') {
+      console.error('❌ FUNÇÃO NÃO ENCONTRADA: testarConexaoSupabase não é uma função');
+      console.error('📋 Tipo recebido:', typeof testarConexaoSupabase);
+      console.error('📋 Valor recebido:', testarConexaoSupabase);
+      alert('❌ Erro: Função de teste não encontrada. Verifique o console.');
+      return;
+    }
+    
     try {
       console.log('🧪 Iniciando teste de conexão com Supabase...');
+      console.log('📋 Função testarConexaoSupabase:', typeof testarConexaoSupabase);
+      
       const resultado = await testarConexaoSupabase();
+      console.log('📊 Resultado do teste:', resultado);
       
       if (resultado.sucesso) {
+        console.log('✅ Teste bem-sucedido, mostrando alerta...');
         alert(`✅ ${resultado.mensagem}\n\n🔗 URL: ${resultado.detalhes.url}\n⏰ ${resultado.detalhes.timestamp}`);
       } else {
+        console.log('❌ Teste falhou, mostrando alerta de erro...');
         alert(`❌ Falha na conexão:\n\n${resultado.erro}\n\n💡 ${resultado.detalhes.sugestao}`);
       }
     } catch (error) {
-      console.error('Erro ao testar conexão:', error);
-      alert('❌ Erro inesperado ao testar conexão');
+      console.error('💥 ERRO CAPTURADO:', error);
+      console.error('📚 Stack trace:', error.stack);
+      alert(`❌ Erro inesperado ao testar conexão:\n\n${error.message}`);
     }
   };
 
@@ -1053,7 +1070,10 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                 </button>
 
                 <button
-                  onClick={handleTestarConexao}
+                  onClick={() => {
+                    console.log('🔘 BOTÃO CLICADO: onClick disparado');
+                    handleTestarConexao();
+                  }}
                   className="flex items-center px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
