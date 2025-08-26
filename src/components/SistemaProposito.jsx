@@ -72,32 +72,16 @@ const SistemaProposito = () => {
   const nomeInputRef = useRef(null);
   const cpfInputRef = useRef(null);
 
-  // Carregar dados salvos ao inicializar
+  // Carregar dados salvos ao inicializar (DESABILITADO TEMPORARIAMENTE)
   useEffect(() => {
-    const carregarUsuarios = async () => {
-      setCarregandoUsuarios(true);
-      try {
-        console.log('🔄 Carregando usuários do Firebase...');
-        const usuariosFirebase = await buscarUsuarios();
-        console.log('✅ Usuários carregados do Firebase:', usuariosFirebase.length);
-        setUsuarios(usuariosFirebase);
-        
-        // Sincronizar com localStorage como backup
-        localStorage.setItem('usuarios', JSON.stringify(usuariosFirebase));
-      } catch (error) {
-        console.error('❌ Erro ao carregar usuários do Firebase:', error);
-        // Fallback para localStorage em caso de erro
-        const savedUsuarios = localStorage.getItem('usuarios');
-        if (savedUsuarios) {
-          console.log('📱 Carregando dados do localStorage como fallback');
-          setUsuarios(JSON.parse(savedUsuarios));
-        }
-      } finally {
-        setCarregandoUsuarios(false);
-      }
-    };
+    console.log('🚧 CARREGAMENTO AUTOMÁTICO DESABILITADO - Aguardando configuração do Supabase');
     
-    carregarUsuarios();
+    // Carregar apenas dados essenciais do localStorage
+    const savedUsuarios = localStorage.getItem('usuarios');
+    if (savedUsuarios) {
+      console.log('📱 Carregando dados existentes do localStorage:', JSON.parse(savedUsuarios).length, 'usuários');
+      setUsuarios(JSON.parse(savedUsuarios));
+    }
     
     // Verificar se já está autenticado como RH
     const rhAuth = localStorage.getItem('rhAuthenticated');
@@ -1151,15 +1135,26 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   <p className="text-gray-600">Clique em um colaborador para ver a análise detalhada</p>
                 </div>
                 
+                                 {/* Status do Supabase */}
+                                 <div className="p-4 bg-yellow-50 border border-yellow-200 mx-6 mt-4 rounded-lg">
+                                   <div className="flex items-center">
+                                     <div className="w-5 h-5 bg-yellow-500 rounded-full mr-3 animate-pulse"></div>
+                                     <div>
+                                       <p className="text-sm font-medium text-yellow-800">🔄 Configuração em Andamento</p>
+                                       <p className="text-xs text-yellow-700">Supabase sendo configurado - Dados carregados do localStorage</p>
+                                     </div>
+                                   </div>
+                                 </div>
+                                 
                                  {carregandoUsuarios ? (
-                   <div className="p-12 text-center">
-                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-spin">
-                       <div className="w-8 h-8 bg-blue-600 rounded-full"></div>
-                     </div>
-                     <h3 className="text-lg font-medium text-gray-800 mb-2">Carregando dados...</h3>
-                     <p className="text-gray-600">Buscando informações do Firebase...</p>
-                   </div>
-                 ) : usuarios.length === 0 ? (
+                                   <div className="p-12 text-center">
+                                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-spin">
+                                       <div className="w-8 h-8 bg-blue-600 rounded-full"></div>
+                                     </div>
+                                     <h3 className="text-lg font-medium text-gray-800 mb-2">Carregando dados...</h3>
+                                     <p className="text-gray-600">Dados carregados do localStorage (Supabase em configuração)</p>
+                                   </div>
+                                 ) : usuarios.length === 0 ? (
                    <div className="p-12 text-center">
                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                        <Users className="w-8 h-8 text-gray-400" />
