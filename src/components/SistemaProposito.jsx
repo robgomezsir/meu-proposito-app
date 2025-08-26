@@ -316,15 +316,27 @@ const SistemaProposito = () => {
 
   const handleRhLogin = useCallback((e) => {
     e.preventDefault();
-    // Verificação discreta para email corporativo da Atento
-    if (rhEmail.includes('@atento.com') && rhEmail.trim()) {
+    console.log('🔐 Tentativa de login RH:', rhEmail);
+    
+    // Verificar se é o administrador principal
+    if (rhEmail === 'robgomez.sir@gmail.com' && rhEmail.trim()) {
+      console.log('👑 Administrador principal detectado');
+      setIsRhAuthenticated(true);
+      setCurrentView('dashboard');
+      // Também autenticar no contexto de autenticação
+      checkAuth(rhEmail);
+    }
+    // Verificação para email corporativo da Atento
+    else if (rhEmail.includes('@atento.com') && rhEmail.trim()) {
+      console.log('🏢 Usuário Atento detectado');
       setIsRhAuthenticated(true);
       setCurrentView('dashboard');
     } else {
       // Mensagem genérica sem revelar o domínio específico
+      console.log('❌ Email não autorizado:', rhEmail);
       alert('Email não autorizado para acesso ao dashboard.');
     }
-  }, [rhEmail]);
+  }, [rhEmail, checkAuth]);
 
   const handleRhLogout = useCallback(() => {
     setIsRhAuthenticated(false);
@@ -1379,7 +1391,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
         </div>
       </div>
     );
-  }, [usuarios, carregandoUsuarios, downloadConsolidado, exportarBackup, limparTodosDados, downloadIndividual, handleRhLogout]);
+  }, [usuarios, carregandoUsuarios, downloadConsolidado, exportarBackup, limparTodosDados, downloadIndividual, handleRhLogout, isAdmin, isAuthorized, isRhAuthenticated, showAdminAuth, showConfigPanel, rhEmail, setShowConfigPanel, setShowAdminAuth]);
 
   // Renderização principal
   if (currentView === 'formulario') {
