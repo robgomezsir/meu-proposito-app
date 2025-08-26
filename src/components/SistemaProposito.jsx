@@ -488,6 +488,14 @@ const SistemaProposito = () => {
   const handleOpenConfigPanel = () => {
     console.log('🔧 Botão Configurações clicado!');
     console.log('📊 Estado atual:', { isAdmin, isAuthorized, isRhAuthenticated, showAdminAuth, showConfigPanel });
+    console.log('📧 Email atual:', rhEmail);
+    
+    // Verificar se é o administrador principal (acesso direto)
+    if (rhEmail === 'robgomez.sir@gmail.com') {
+      console.log('👑 Administrador principal - acesso direto ao painel');
+      setShowConfigPanel(true);
+      return;
+    }
     
     // Verificar se o usuário tem acesso via qualquer um dos sistemas de autenticação
     if (isAdmin || isAuthorized || isRhAuthenticated) {
