@@ -17,6 +17,9 @@ const SistemaProposito = () => {
   // Hook de autenticação
   const { isAdmin, isAuthorized, canAccessDashboard, checkAuth } = useAuth();
   
+  // Debug: verificar estado do hook de autenticação
+  console.log('🔐 Estado do AuthContext:', { isAdmin, isAuthorized, canAccessDashboard });
+  
   const [currentView, setCurrentView] = useState('formulario'); // formulario, sucesso, dashboard
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([[], [], [], []]);
@@ -471,9 +474,15 @@ const SistemaProposito = () => {
 
   // Funções para o Painel de Configurações
   const handleOpenConfigPanel = () => {
-    if (isAdmin || isAuthorized) {
+    console.log('🔧 Botão Configurações clicado!');
+    console.log('📊 Estado atual:', { isAdmin, isAuthorized, isRhAuthenticated, showAdminAuth, showConfigPanel });
+    
+    // Verificar se o usuário tem acesso via qualquer um dos sistemas de autenticação
+    if (isAdmin || isAuthorized || isRhAuthenticated) {
+      console.log('✅ Usuário autorizado, abrindo painel de configurações');
       setShowConfigPanel(true);
     } else {
+      console.log('🔒 Usuário não autorizado, abrindo modal de autenticação');
       setShowAdminAuth(true);
     }
   };
