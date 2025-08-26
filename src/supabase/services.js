@@ -3,228 +3,135 @@ import { supabase } from './config'
 // Referência para a tabela de usuários
 const USUARIOS_TABLE = 'usuarios'
 
-// Adicionar novo usuário
+// Adicionar novo usuário (DESABILITADO TEMPORARIAMENTE)
 export const adicionarUsuario = async (usuario) => {
+  console.log('🚧 ADIÇÃO DESABILITADA - Aguardando configuração do Supabase')
+  console.log('📱 Salvando usuário no localStorage como fallback')
+  
+  // Salvar no localStorage em vez de fazer chamada à API
   try {
-    console.log('📝 Iniciando adição de usuário no Supabase...')
-    console.log('📊 Dados do usuário:', JSON.stringify(usuario, null, 2))
+    const savedUsuarios = localStorage.getItem('usuarios')
+    const usuarios = savedUsuarios ? JSON.parse(savedUsuarios) : []
     
-    // Verificar se há arrays aninhados
-    const verificarArraysAninhados = (obj, path = '') => {
-      for (const [key, value] of Object.entries(obj)) {
-        const currentPath = path ? `${path}.${key}` : key
-        if (Array.isArray(value)) {
-          console.log(`🔍 Array encontrado em: ${currentPath}`, value)
-          // Verificar se é array de arrays
-          if (value.some(item => Array.isArray(item))) {
-            console.warn(`⚠️ ARRAY ANINHADO DETECTADO em: ${currentPath}`, value)
-          }
-        } else if (value && typeof value === 'object') {
-          verificarArraysAninhados(value, currentPath)
-        }
+    // Gerar ID temporário
+    const usuarioComId = {
+      ...usuario,
+      id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    
+    usuarios.push(usuarioComId)
+    localStorage.setItem('usuarios', JSON.stringify(usuarios))
+    
+    console.log('📱 Usuário salvo no localStorage:', usuarioComId.nome)
+    return usuarioComId
+  } catch (error) {
+    console.log('📱 Erro ao salvar no localStorage:', error)
+    throw new Error('Erro ao salvar usuário temporariamente')
+  }
+}
+
+// Buscar todos os usuários (DESABILITADO TEMPORARIAMENTE)
+export const buscarUsuarios = async () => {
+  console.log('🚧 BUSCA DESABILITADA - Aguardando configuração do Supabase')
+  console.log('📱 Retornando dados do localStorage como fallback')
+  
+  // Retornar dados do localStorage em vez de fazer chamada à API
+  try {
+    const savedUsuarios = localStorage.getItem('usuarios')
+    if (savedUsuarios) {
+      const usuarios = JSON.parse(savedUsuarios)
+      console.log(`📱 ${usuarios.length} usuários carregados do localStorage`)
+      return usuarios
+    }
+    return []
+  } catch (error) {
+    console.log('📱 Erro ao carregar do localStorage, retornando array vazio')
+    return []
+  }
+}
+
+// Deletar usuário específico (DESABILITADO TEMPORARIAMENTE)
+export const deletarUsuario = async (id) => {
+  console.log(`🚧 DELEÇÃO DESABILITADA - Aguardando configuração do Supabase`)
+  console.log(`📱 Deletando usuário ${id} do localStorage como fallback`)
+  
+  // Deletar do localStorage em vez de fazer chamada à API
+  try {
+    const savedUsuarios = localStorage.getItem('usuarios')
+    if (savedUsuarios) {
+      const usuarios = JSON.parse(savedUsuarios)
+      const usuariosFiltrados = usuarios.filter(u => u.id !== id)
+      localStorage.setItem('usuarios', JSON.stringify(usuariosFiltrados))
+      console.log(`📱 Usuário ${id} deletado do localStorage`)
+      return true
+    }
+    return false
+  } catch (error) {
+    console.log('📱 Erro ao deletar do localStorage:', error)
+    return false
+  }
+}
+
+// Deletar todos os usuários (DESABILITADO TEMPORARIAMENTE)
+export const deletarTodosUsuarios = async () => {
+  console.log('🚧 DELEÇÃO EM MASSA DESABILITADA - Aguardando configuração do Supabase')
+  console.log('📱 Deletando todos os usuários do localStorage como fallback')
+  
+  // Deletar do localStorage em vez de fazer chamada à API
+  try {
+    localStorage.removeItem('usuarios')
+    console.log('📱 Todos os usuários deletados do localStorage')
+    return true
+  } catch (error) {
+    console.log('📱 Erro ao deletar do localStorage:', error)
+    return false
+  }
+}
+
+// Verificar se CPF já existe (DESABILITADO TEMPORARIAMENTE)
+export const verificarCPFExistente = async (cpf) => {
+  console.log(`🚧 VERIFICAÇÃO DESABILITADA - Aguardando configuração do Supabase`)
+  console.log(`📱 Verificando CPF ${cpf} no localStorage como fallback`)
+  
+  // Verificar no localStorage em vez de fazer chamada à API
+  try {
+    const savedUsuarios = localStorage.getItem('usuarios')
+    if (savedUsuarios) {
+      const usuarios = JSON.parse(savedUsuarios)
+      const usuarioExistente = usuarios.find(u => u.cpf === cpf)
+      console.log(`📱 CPF ${cpf} ${usuarioExistente ? 'encontrado' : 'não encontrado'} no localStorage`)
+      return usuarioExistente || null
+    }
+    return null
+  } catch (error) {
+    console.log('📱 Erro ao verificar no localStorage, retornando null')
+    return null
+  }
+}
+
+// Buscar usuário por ID (DESABILITADO TEMPORARIAMENTE)
+export const buscarUsuarioPorId = async (id) => {
+  console.log(`🚧 BUSCA POR ID DESABILITADA - Aguardando configuração do Supabase`)
+  console.log(`📱 Buscando usuário ${id} no localStorage como fallback`)
+  
+  // Buscar no localStorage em vez de fazer chamada à API
+  try {
+    const savedUsuarios = localStorage.getItem('usuarios')
+    if (savedUsuarios) {
+      const usuarios = JSON.parse(savedUsuarios)
+      const usuario = usuarios.find(u => u.id === id)
+      if (usuario) {
+        console.log(`📱 Usuário ${id} encontrado no localStorage:`, usuario.nome)
+        return usuario
       }
     }
-    
-    verificarArraysAninhados(usuario)
-    
-    // Preparar dados para salvar (adaptar para estrutura do Supabase)
-    const dadosParaSalvar = {
-      nome: usuario.nome,
-      cpf: usuario.cpf,
-      email: usuario.email,
-      respostas: usuario.respostas,
-      score: usuario.score,
-      status: usuario.status,
-      categoria: usuario.categoria,
-      analise_clinica: usuario.analiseClinica,
-      data_realizacao: usuario.dataRealizacao || new Date().toISOString(),
-      tipo: usuario.tipo,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-    
-    // Se for questionário integrado, adicionar campos específicos
-    if (usuario.tipo === 'questionario_integrado') {
-      dadosParaSalvar.tipo_questionario = 'proposito'
-      dadosParaSalvar.origem = 'questionario_integrado'
-      dadosParaSalvar.status = 'finalizado'
-      dadosParaSalvar.finalizado_em = new Date().toISOString()
-    }
-    
-    const { data, error } = await supabase
-      .from(USUARIOS_TABLE)
-      .insert([dadosParaSalvar])
-      .select()
-    
-    if (error) {
-      console.error('❌ Erro ao adicionar usuário no Supabase:', error)
-      throw error
-    }
-    
-    console.log('✅ Usuário adicionado com sucesso no Supabase! ID:', data[0].id)
-    return { id: data[0].id, ...usuario }
+    console.log(`📱 Usuário ${id} não encontrado no localStorage`)
+    return null
   } catch (error) {
-    console.error('❌ Erro ao adicionar usuário:', error)
-    console.error('🔍 Detalhes do erro:', {
-      message: error.message,
-      code: error.code,
-      stack: error.stack
-    })
-    throw error
-  }
-}
-
-// Buscar todos os usuários
-export const buscarUsuarios = async () => {
-  try {
-    console.log('🔄 Buscando usuários no Supabase...')
-    
-    const { data, error } = await supabase
-      .from(USUARIOS_TABLE)
-      .select('*')
-      .order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('❌ Erro ao buscar usuários no Supabase:', error)
-      throw error
-    }
-    
-    console.log(`✅ ${data.length} usuários encontrados no Supabase`)
-    
-    // Adaptar dados para compatibilidade com o código existente
-    const usuariosAdaptados = data.map(usuario => ({
-      id: usuario.id,
-      nome: usuario.nome,
-      cpf: usuario.cpf,
-      email: usuario.email,
-      respostas: usuario.respostas,
-      score: usuario.score,
-      status: usuario.status,
-      categoria: usuario.categoria,
-      analiseClinica: usuario.analise_clinica,
-      dataRealizacao: usuario.data_realizacao,
-      tipo: usuario.tipo,
-      createdAt: usuario.created_at,
-      updatedAt: usuario.updated_at
-    }))
-    
-    return usuariosAdaptados
-  } catch (error) {
-    console.error('❌ Erro ao buscar usuários:', error)
-    throw error
-  }
-}
-
-// Deletar usuário específico
-export const deletarUsuario = async (id) => {
-  try {
-    console.log(`🗑️ Deletando usuário ${id} no Supabase...`)
-    
-    const { error } = await supabase
-      .from(USUARIOS_TABLE)
-      .delete()
-      .eq('id', id)
-    
-    if (error) {
-      console.error('❌ Erro ao deletar usuário no Supabase:', error)
-      throw error
-    }
-    
-    console.log('✅ Usuário deletado com sucesso no Supabase!')
-    return true
-  } catch (error) {
-    console.error('❌ Erro ao deletar usuário:', error)
-    throw error
-  }
-}
-
-// Deletar todos os usuários
-export const deletarTodosUsuarios = async () => {
-  try {
-    console.log('🗑️ Deletando TODOS os usuários no Supabase...')
-    
-    const { error } = await supabase
-      .from(USUARIOS_TABLE)
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000') // Deletar todos
-    
-    if (error) {
-      console.error('❌ Erro ao deletar todos os usuários no Supabase:', error)
-      throw error
-    }
-    
-    console.log('✅ Todos os usuários foram deletados com sucesso no Supabase!')
-    return true
-  } catch (error) {
-    console.error('❌ Erro ao deletar todos os usuários:', error)
-    throw error
-  }
-}
-
-// Verificar se CPF já existe
-export const verificarCPFExistente = async (cpf) => {
-  try {
-    console.log(`🔍 Verificando se CPF ${cpf} já existe no Supabase...`)
-    
-    const { data, error } = await supabase
-      .from(USUARIOS_TABLE)
-      .select('id, nome, cpf')
-      .eq('cpf', cpf)
-      .limit(1)
-    
-    if (error) {
-      console.error('❌ Erro ao verificar CPF no Supabase:', error)
-      throw error
-    }
-    
-    const existe = data && data.length > 0
-    console.log(`🔍 CPF ${cpf} ${existe ? 'JÁ EXISTE' : 'NÃO EXISTE'} no Supabase`)
-    
-    return existe
-  } catch (error) {
-    console.error('❌ Erro ao verificar CPF:', error)
-    throw error
-  }
-}
-
-// Buscar usuário por ID
-export const buscarUsuarioPorId = async (id) => {
-  try {
-    console.log(`🔍 Buscando usuário ${id} no Supabase...`)
-    
-    const { data, error } = await supabase
-      .from(USUARIOS_TABLE)
-      .select('*')
-      .eq('id', id)
-      .single()
-    
-    if (error) {
-      console.error('❌ Erro ao buscar usuário por ID no Supabase:', error)
-      throw error
-    }
-    
-    // Adaptar dados para compatibilidade
-    const usuarioAdaptado = {
-      id: data.id,
-      nome: data.nome,
-      cpf: data.cpf,
-      email: data.email,
-      respostas: data.respostas,
-      score: data.score,
-      status: data.status,
-      categoria: data.categoria,
-      analiseClinica: data.analise_clinica,
-      dataRealizacao: data.data_realizacao,
-      tipo: data.tipo,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    }
-    
-    console.log('✅ Usuário encontrado no Supabase:', usuarioAdaptado.nome)
-    return usuarioAdaptado
-  } catch (error) {
-    console.error('❌ Erro ao buscar usuário por ID:', error)
-    throw error
+    console.log('📱 Erro ao buscar no localStorage, retornando null')
+    return null
   }
 }
 
