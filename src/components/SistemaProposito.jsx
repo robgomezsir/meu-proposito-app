@@ -497,9 +497,16 @@ const SistemaProposito = () => {
       return;
     }
     
-    // Verificar se o usuário tem acesso via qualquer um dos sistemas de autenticação
-    if (isAdmin || isAuthorized || isRhAuthenticated) {
-      console.log('✅ Usuário autorizado, abrindo painel de configurações');
+    // Para usuários @atento.com, precisam de autenticação adicional para configurações
+    if (rhEmail.includes('@atento.com')) {
+      console.log('🏢 Usuário Atento - requer autenticação para configurações');
+      setShowAdminAuth(true);
+      return;
+    }
+    
+    // Verificar se tem outras autorizações
+    if (isAdmin || isAuthorized) {
+      console.log('✅ Usuário autorizado via contexto, abrindo painel de configurações');
       setShowConfigPanel(true);
     } else {
       console.log('🔒 Usuário não autorizado, abrindo modal de autenticação');
