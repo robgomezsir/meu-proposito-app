@@ -1,15 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2, Mail } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2, Mail, Settings } from 'lucide-react';
 import { adicionarUsuario, buscarUsuarios, deletarTodosUsuarios, verificarCPFExistente } from '../firebase/services';
 import { testarConexaoFirebase, limparDadosTeste } from '../firebase/test-connection';
 import RegistrationForm from './RegistrationForm';
 import QuestionnaireLayout from './QuestionnaireLayout';
 import SuccessScreen from './SuccessScreen';
 import useRenderOverride from '../config/render-override';
+import { useAuth } from '../contexts/AuthContext';
+import AdminAuthModal from './AdminAuthModal';
+import ConfigPanel from './ConfigPanel';
 
 const SistemaProposito = () => {
   // Aplicar override do Render se necessário
   useRenderOverride();
+  
+  // Hook de autenticação
+  const { isAdmin, isAuthorized, canAccessDashboard, checkAuth } = useAuth();
   
   const [currentView, setCurrentView] = useState('formulario'); // formulario, sucesso, dashboard
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -21,6 +27,10 @@ const SistemaProposito = () => {
   const [isRhAuthenticated, setIsRhAuthenticated] = useState(false);
   const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
   const [dadosEnviados, setDadosEnviados] = useState(false); // Controla se os dados já foram enviados
+  
+  // Estados para o Painel de Configurações
+  const [showAdminAuth, setShowAdminAuth] = useState(false);
+  const [showConfigPanel, setShowConfigPanel] = useState(false);
 
   // Refs para controle de foco
   const nomeInputRef = useRef(null);
@@ -58,7 +68,14 @@ const SistemaProposito = () => {
     if (rhAuth === 'true') {
       setIsRhAuthenticated(true);
     }
-  }, []);
+    
+    // Verificar se há usuário autenticado no contexto
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      const userData = JSON.parse(savedUser);
+      checkAuth(userData.email);
+    }
+  }, [checkAuth]);
 
   // Salvar dados sempre que houver mudança (localStorage como backup)
   useEffect(() => {
@@ -450,6 +467,23 @@ const SistemaProposito = () => {
         alert(`❌ Erro ao limpar dados:\n\n${error.message}\n\nTente novamente.`);
       }
     }
+  };
+
+  // Funções para o Painel de Configurações
+  const handleOpenConfigPanel = () => {
+    if (isAdmin || isAuthorized) {
+      setShowConfigPanel(true);
+    } else {
+      setShowAdminAuth(true);
+    }
+  };
+
+  const handleAdminAuthSuccess = () => {
+    setShowConfigPanel(true);
+  };
+
+  const handleCloseConfigPanel = () => {
+    setShowConfigPanel(false);
   };
 
   // Função para testar conexão Firebase
@@ -910,12 +944,22 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   <p className="text-gray-600">Análise de Propósito - Resultados dos Colaboradores</p>
                 </div>
               </div>
-              <button
-                onClick={handleRhLogout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
-              >
-                Sair do Sistema
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handleOpenConfigPanel}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center"
+                  title="Painel de Configurações"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Configurações
+                </button>
+                <button
+                  onClick={handleRhLogout}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                >
+                  Sair do Sistema
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -938,43 +982,13 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   Download Relatório Consolidado
                 </button>
                 
-                                 <button
-                   onClick={exportarBackup}
-                   disabled={usuarios.length === 0}
-                   className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                     usuarios.length > 0
-                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1'
-                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                   }`}
-                 >
-                   <BarChart3 className="w-5 h-5 mr-2" />
-                   Exportar Dados
-                 </button>
+
                 
-                <button
-                  onClick={limparTodosDados}
-                  className="flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                >
-                  <Trash2 className="w-5 h-5 mr-2" />
-                  Limpar Todos os Dados
-                </button>
+
                 
                 
               </div>
-              {/* Informação sobre Persistência */}
-              <div className="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                                                              <p className="text-sm text-blue-700">
-                        <strong>💾 Dados Persistidos:</strong> Todos os registros são salvos na nuvem! Use "Exportar dados" para salvar uma cópia do sistema.                     </p>
-                  </div>
-                </div>
-              </div>
+
 
               {/* Estatísticas Gerais */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -1419,7 +1433,23 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
     return <DashboardComponent />;
   }
 
-  return null;
+  return (
+    <>
+      {/* Modais do Painel de Configurações */}
+      <AdminAuthModal
+        isOpen={showAdminAuth}
+        onClose={() => setShowAdminAuth(false)}
+        onSuccess={handleAdminAuthSuccess}
+      />
+      
+      <ConfigPanel
+        isOpen={showConfigPanel}
+        onClose={handleCloseConfigPanel}
+        onExportData={exportarBackup}
+        onClearAllData={limparTodosDados}
+      />
+    </>
+  );
 };
 
 export default SistemaProposito;
