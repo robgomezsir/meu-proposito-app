@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2, Mail, Settings } from 'lucide-react';
-import { adicionarUsuario, buscarUsuarios, deletarTodosUsuarios, verificarCPFExistente } from '../firebase/services';
-import { testarConexaoFirebase, limparDadosTeste } from '../firebase/test-connection';
+import { adicionarUsuario, buscarUsuarios, deletarTodosUsuarios, verificarCPFExistente } from '../supabase/services';
+import { testarConexaoSupabase, limparDadosTeste } from '../supabase/config';
 import RegistrationForm from './RegistrationForm';
 import QuestionnaireLayout from './QuestionnaireLayout';
 import SuccessScreen from './SuccessScreen';

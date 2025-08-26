@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@supabase/supabase-js": "^2.56.0",
     "clsx": "^2.1.1",
     "firebase": "^9.23.0",
     "lucide-react": "^0.263.1",
