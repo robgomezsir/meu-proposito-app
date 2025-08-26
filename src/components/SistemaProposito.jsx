@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2, Mail, Settings } from 'lucide-react';
 import { adicionarUsuario, buscarUsuarios, deletarTodosUsuarios, verificarCPFExistente, testarConexaoSupabase } from '../supabase/services';
 import { limparDadosTeste } from '../supabase/config';
+import { testarConexaoFirebase } from '../firebase/test-connection';
 import RegistrationForm from './RegistrationForm';
 import QuestionnaireLayout from './QuestionnaireLayout';
 import SuccessScreen from './SuccessScreen';
@@ -12,10 +13,12 @@ import ConfigPanel from './ConfigPanel';
 import { isMaintenanceMode, canAccessDuringMaintenance } from '../config/maintenance';
 
 const SistemaProposito = () => {
+  // Hook de autenticação - DEVE vir ANTES de qualquer condição
+  const { isAdmin, isAuthorized, canAccessDashboard, checkAuth, logout, currentUser } = useAuth();
+  
   // Modo de Manutenção
   if (isMaintenanceMode()) {
     // Verificar se pode acessar durante manutenção
-    const { currentUser } = useAuth();
     const userEmail = currentUser?.email || '';
     
     if (!canAccessDuringMaintenance(userEmail)) {
@@ -47,9 +50,6 @@ const SistemaProposito = () => {
   // Aplicar override do Render se necessário
   useRenderOverride();
   
-  // Hook de autenticação
-  const { isAdmin, isAuthorized, canAccessDashboard, checkAuth } = useAuth();
-  
   // Debug: verificar estado do hook de autenticação
   console.log('🔐 Estado do AuthContext:', { isAdmin, isAuthorized, canAccessDashboard });
   
@@ -75,6 +75,7 @@ const SistemaProposito = () => {
   // Carregar dados salvos ao inicializar (BUSCA SOB DEMANDA)
   useEffect(() => {
     console.log('📱 CARREGAMENTO SOB DEMANDA - Dados carregados apenas quando solicitado');
+    console.log('🔍 Estado inicial - currentView:', currentView, 'isRhAuthenticated:', isRhAuthenticated);
     
     // Carregar apenas dados essenciais do localStorage (sem fazer chamadas à API)
     const savedUsuarios = localStorage.getItem('usuarios');
@@ -85,14 +86,22 @@ const SistemaProposito = () => {
     
     // Verificar se já está autenticado como RH
     const rhAuth = localStorage.getItem('rhAuthenticated');
+    console.log('🔍 Estado de autenticação RH carregado do localStorage:', rhAuth);
     if (rhAuth === 'true') {
       setIsRhAuthenticated(true);
+      console.log('✅ Usuário RH reautenticado automaticamente');
+      // Se está autenticado como RH, deve estar no dashboard
+      if (currentView === 'formulario') {
+        setCurrentView('dashboard');
+        console.log('🔄 Redirecionando para dashboard após reautenticação');
+      }
     }
     
     // Verificar se há usuário autenticado no contexto
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
       const userData = JSON.parse(savedUser);
+      console.log('👤 Usuário autenticado encontrado:', userData.email);
       checkAuth(userData.email);
     }
   }, [checkAuth]);
@@ -105,7 +114,19 @@ const SistemaProposito = () => {
   // Salvar estado de autenticação RH
   useEffect(() => {
     localStorage.setItem('rhAuthenticated', isRhAuthenticated);
-  }, [isRhAuthenticated]);
+    console.log('💾 Estado de autenticação RH salvo:', isRhAuthenticated);
+    
+    // Se não está mais autenticado, voltar para o formulário
+    if (!isRhAuthenticated && currentView === 'dashboard') {
+      setCurrentView('formulario');
+      console.log('🔄 Redirecionando para formulário após logout');
+      
+      // Limpar dados sensíveis
+      setRhEmail('');
+      setShowAdminAuth(false);
+      setShowConfigPanel(false);
+    }
+  }, [isRhAuthenticated, currentView]);
 
   // Auto-focus no primeiro input quando o componente carrega
   useEffect(() => {
@@ -355,11 +376,25 @@ const SistemaProposito = () => {
     }
   }, [rhEmail, checkAuth]);
 
-  const handleRhLogout = useCallback(() => {
+  const handleRhLogout = () => {
+    console.log('🚪 Iniciando processo de logout...');
+    console.log('🔍 Estado antes do logout:', { isRhAuthenticated, currentView, rhEmail });
+    
+    // Limpar estado local
     setIsRhAuthenticated(false);
     setRhEmail('');
     setCurrentView('formulario');
-  }, []);
+    
+    // Limpar estado de autenticação global
+    logout();
+    
+    // Limpar localStorage
+    localStorage.removeItem('rhAuthenticated');
+    localStorage.removeItem('currentUser');
+    
+    console.log('🚪 Logout realizado com sucesso');
+    console.log('🔍 Estado após logout - isRhAuthenticated:', false, 'currentView: formulario');
+  };
 
   // Função para atualizar campos do usuário - otimizada para evitar re-renders
   const handleInputChange = useCallback((e) => {
@@ -1110,10 +1145,16 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   Configurações
                 </button>
                 <button
-                  onClick={handleRhLogout}
+                  onClick={() => {
+                    console.log('🔘 BOTÃO SAIR CLICADO: Iniciando logout...');
+                    console.log('🔍 Estado atual:', { isRhAuthenticated, currentView, rhEmail });
+                    handleRhLogout();
+                  }}
                   className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                  title="Sair do Sistema"
+                  disabled={!isRhAuthenticated}
                 >
-                  Sair do Sistema
+                  {isRhAuthenticated ? 'Sair do Sistema' : 'Saindo...'}
                 </button>
               </div>
             </div>
@@ -1554,7 +1595,7 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
         </div>
       </div>
     );
-  }, [usuarios, carregandoUsuarios, downloadConsolidado, exportarBackup, limparTodosDados, downloadIndividual, handleRhLogout, isAdmin, isAuthorized, isRhAuthenticated, showAdminAuth, showConfigPanel, rhEmail, setShowConfigPanel, setShowAdminAuth]);
+  }, [usuarios, carregandoUsuarios, downloadConsolidado, exportarBackup, limparTodosDados, downloadIndividual, isAdmin, isAuthorized, isRhAuthenticated, showAdminAuth, showConfigPanel, rhEmail, setShowConfigPanel, setShowAdminAuth]);
 
   // Renderização principal
   if (currentView === 'formulario') {

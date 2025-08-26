@@ -88,10 +88,19 @@ export const AuthProvider = ({ children }) => {
 
   // Fazer logout
   const logout = () => {
+    console.log('🔐 AuthContext: Iniciando logout...');
+    
+    // Limpar estados locais
     setIsAdmin(false);
     setIsAuthorized(false);
     setCurrentUser(null);
+    
+    // Limpar localStorage
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('authorizedEmails');
+    localStorage.removeItem('rhAuthenticated');
+    
+    console.log('🔐 AuthContext: Logout concluído');
   };
 
   // Verificar se o usuário atual tem permissão para acessar o dashboard
