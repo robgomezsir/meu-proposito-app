@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CheckCircle2, Circle, ArrowRight, ArrowLeft, User, FileText, BarChart3, Heart, Users, TrendingUp, UserCheck, Eye, Trash2, Mail, Settings } from 'lucide-react';
-import { adicionarUsuario, buscarUsuarios, deletarTodosUsuarios, verificarCPFExistente } from '../supabase/services';
-import { testarConexaoSupabase, limparDadosTeste } from '../supabase/config';
+import { adicionarUsuario, buscarUsuarios, deletarTodosUsuarios, verificarCPFExistente, testarConexaoSupabase } from '../supabase/services';
+import { limparDadosTeste } from '../supabase/config';
 import RegistrationForm from './RegistrationForm';
 import QuestionnaireLayout from './QuestionnaireLayout';
 import SuccessScreen from './SuccessScreen';
@@ -554,6 +554,23 @@ const SistemaProposito = () => {
     }
   };
 
+  // Função para testar conexão com Supabase
+  const handleTestarConexao = async () => {
+    try {
+      console.log('🧪 Iniciando teste de conexão com Supabase...');
+      const resultado = await testarConexaoSupabase();
+      
+      if (resultado.sucesso) {
+        alert(`✅ ${resultado.mensagem}\n\n🔗 URL: ${resultado.detalhes.url}\n⏰ ${resultado.detalhes.timestamp}`);
+      } else {
+        alert(`❌ Falha na conexão:\n\n${resultado.erro}\n\n💡 ${resultado.detalhes.sugestao}`);
+      }
+    } catch (error) {
+      console.error('Erro ao testar conexão:', error);
+      alert('❌ Erro inesperado ao testar conexão');
+    }
+  };
+
   // Função para limpar dados de teste
   const limparTeste = async () => {
     try {
@@ -1034,12 +1051,16 @@ Relatório gerado automaticamente pelo Sistema de Análise de Propósito
                   <FileText className="w-5 h-5 mr-2" />
                   Download Relatório Consolidado
                 </button>
-                
 
-                
-
-                
-                
+                <button
+                  onClick={handleTestarConexao}
+                  className="flex items-center px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Testar Conexão Supabase
+                </button>
               </div>
 
 

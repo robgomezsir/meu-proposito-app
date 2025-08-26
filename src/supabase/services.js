@@ -135,68 +135,113 @@ export const buscarUsuarioPorId = async (id) => {
   }
 }
 
-// Atualizar usuário
+// Atualizar usuário (DESABILITADO TEMPORARIAMENTE)
 export const atualizarUsuario = async (id, dadosAtualizados) => {
+  console.log(`🚧 ATUALIZAÇÃO DESABILITADA - Aguardando configuração do Supabase`)
+  console.log(`📱 Atualizando usuário ${id} no localStorage como fallback`)
+  
+  // Atualizar no localStorage em vez de fazer chamada à API
   try {
-    console.log(`📝 Atualizando usuário ${id} no Supabase...`)
-    
-    const dadosParaAtualizar = {
-      ...dadosAtualizados,
-      updated_at: new Date().toISOString()
+    const savedUsuarios = localStorage.getItem('usuarios')
+    if (savedUsuarios) {
+      const usuarios = JSON.parse(savedUsuarios)
+      const index = usuarios.findIndex(u => u.id === id)
+      if (index !== -1) {
+        usuarios[index] = { ...usuarios[index], ...dadosAtualizados, updatedAt: new Date().toISOString() }
+        localStorage.setItem('usuarios', JSON.stringify(usuarios))
+        console.log(`📱 Usuário ${id} atualizado no localStorage`)
+        return usuarios[index]
+      }
     }
-    
-    const { data, error } = await supabase
-      .from(USUARIOS_TABLE)
-      .update(dadosParaAtualizar)
-      .eq('id', id)
-      .select()
-    
-    if (error) {
-      console.error('❌ Erro ao atualizar usuário no Supabase:', error)
-      throw error
-    }
-    
-    console.log('✅ Usuário atualizado com sucesso no Supabase!')
-    return data[0]
+    throw new Error('Usuário não encontrado')
   } catch (error) {
-    console.error('❌ Erro ao atualizar usuário:', error)
+    console.log('📱 Erro ao atualizar no localStorage:', error)
     throw error
   }
 }
 
-// Função para migrar dados do Firebase para Supabase
+// Função para migrar dados do Firebase para Supabase (DESABILITADA TEMPORARIAMENTE)
 export const migrarDadosFirebase = async (dadosFirebase) => {
+  console.log('🚧 MIGRAÇÃO DESABILITADA - Aguardando configuração do Supabase')
+  console.log('📱 Migração será realizada após configuração completa')
+  
+  return {
+    sucesso: false,
+    erro: 'Migração desabilitada temporariamente',
+    total: dadosFirebase.length,
+    sucessos: 0,
+    erros: dadosFirebase.length
+  }
+}
+
+// =====================================================
+// FUNÇÃO DE TESTE DE CONEXÃO COM SUPABASE
+// =====================================================
+
+export const testarConexaoSupabase = async () => {
+  console.log('🧪 TESTANDO CONEXÃO COM SUPABASE...')
+  
   try {
-    console.log('🚀 Iniciando migração de dados do Firebase para Supabase...')
-    console.log(`📊 Total de registros para migrar: ${dadosFirebase.length}`)
+    // Teste 1: Verificar se o cliente está configurado
+    if (!supabase) {
+      throw new Error('Cliente Supabase não está configurado')
+    }
     
-    let sucessos = 0
-    let erros = 0
+    console.log('✅ Cliente Supabase configurado')
     
-    for (const usuario of dadosFirebase) {
-      try {
-        await adicionarUsuario(usuario)
-        sucessos++
-        console.log(`✅ Migrado: ${usuario.nome}`)
-      } catch (error) {
-        erros++
-        console.error(`❌ Erro ao migrar ${usuario.nome}:`, error.message)
+    // Teste 2: Verificar se as credenciais estão definidas
+    const url = supabase.supabaseUrl
+    const key = supabase.supabaseKey
+    
+    if (!url || !key) {
+      throw new Error('Credenciais do Supabase não estão definidas')
+    }
+    
+    console.log('✅ Credenciais do Supabase configuradas')
+    console.log('🔗 URL:', url)
+    console.log('🔑 Key:', key ? `${key.substring(0, 20)}...` : 'Não definida')
+    
+    // Teste 3: Tentar conectar e verificar se a tabela existe
+    console.log('🔄 Tentando conectar ao Supabase...')
+    
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('count')
+      .limit(1)
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw new Error('Tabela "usuarios" não encontrada. Execute o schema SQL primeiro!')
+      } else {
+        throw new Error(`Erro de conexão: ${error.message}`)
       }
     }
     
-    console.log(`🎉 Migração concluída! Sucessos: ${sucessos}, Erros: ${erros}`)
+    console.log('✅ Conexão com Supabase estabelecida com sucesso!')
+    console.log('✅ Tabela "usuarios" encontrada e acessível')
     
     return {
       sucesso: true,
-      total: dadosFirebase.length,
-      sucessos,
-      erros
+      mensagem: 'Conexão estabelecida com sucesso!',
+      detalhes: {
+        url: url,
+        tabela_existe: true,
+        timestamp: new Date().toISOString()
+      }
     }
+    
   } catch (error) {
-    console.error('❌ Erro durante migração:', error)
+    console.error('❌ ERRO NO TESTE DE CONEXÃO:', error.message)
+    
     return {
       sucesso: false,
-      erro: error.message
+      erro: error.message,
+      detalhes: {
+        timestamp: new Date().toISOString(),
+        sugestao: error.message.includes('não encontrada') 
+          ? 'Execute o schema SQL no Supabase Dashboard' 
+          : 'Verifique as credenciais e conexão'
+      }
     }
   }
 }
