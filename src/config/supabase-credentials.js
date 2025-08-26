@@ -10,7 +10,8 @@ export const SYSTEM_CONFIG = {
   apiUrl: 'http://localhost:3000',
   logLevel: 'info',
   migrationEnabled: true,
-  migrationBatchSize: 100
+  migrationBatchSize: 100,
+  maintenanceMode: process.env.REACT_APP_MAINTENANCE_MODE === 'true'
 };
 
 // Configurações de autenticação
