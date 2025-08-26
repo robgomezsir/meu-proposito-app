@@ -2,7 +2,6 @@
   "name": "sistema-proposito",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://robgomezsir.github.io/meu-proposito-app",
   "dependencies": {
     "clsx": "^2.1.1",
     "firebase": "^9.23.0",
@@ -14,19 +13,15 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build-render": "cross-env REACT_APP_ENV=render react-scripts build",
-    "build-gh": "cross-env REACT_APP_ENV=github-pages react-scripts build",
-    "build-local": "cross-env REACT_APP_ENV=local react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "predeploy": "npm run build-gh",
-    "deploy": "echo 'Deploy via GitHub Actions - execute: git push origin main'",
-    "deploy-gh": "gh-pages -d build --repo https://github.com/robgomezsir/meu-proposito-app.git"
+    "preview": "npm run build && npx serve -s build",
+    "analyze": "npm run build && npx bundle-analyzer build/static/js/*.js",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.14",
-    "cross-env": "^10.0.0",
-    "gh-pages": "^6.3.0",
     "postcss": "^8.4.24",
     "tailwindcss": "^3.3.0"
   },
